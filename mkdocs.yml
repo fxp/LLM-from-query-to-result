@@ -1,0 +1,77 @@
+site_name: LLM-from-query-to-result
+site_description: 从 query 到 GPU，五层可运行的全栈教科书
+site_url: https://fxp.github.io/LLM-from-query-to-result/
+repo_url: https://github.com/fxp/LLM-from-query-to-result
+repo_name: fxp/LLM-from-query-to-result
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+theme:
+  name: material
+  language: zh
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: 切换到暗色模式
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: 切换到亮色模式
+  font:
+    text: Inter
+    code: JetBrains Mono
+
+nav:
+  - 首页: index.md
+  - L1 · App 层: 01-app.md
+  - L2 · Agent 层: 02-agent.md
+  - L3 · Model 层: 03-model.md
+  - L4 · Transformer 层: 04-transformer.md
+  - L5 · GPU 层: 05-gpu.md
+  - 端到端 Trace: trace.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/fxp/LLM-from-query-to-result
