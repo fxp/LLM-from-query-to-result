@@ -1,4 +1,4 @@
-name: Deploy docs to GitHub Pages
+name: Build and publish docs
 
 on:
   push:
@@ -12,16 +12,14 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write   # needed to push the built site to gh-pages branch
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: docs-pages
+  cancel-in-progress: true
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,30 +28,12 @@ jobs:
           python-version: "3.11"
       - name: Install MkDocs Material
         run: pip install mkdocs-material
-      - name: Build
+      - name: Build site
         run: mkdocs build --strict
-      - uses: actions/upload-artifact@v4
+      - name: Push to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          name: site
-          path: site
-          if-no-files-found: error
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: site
-          path: site
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          force_orphan: true
