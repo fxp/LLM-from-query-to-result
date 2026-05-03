@@ -36,6 +36,10 @@ L3_URL = os.environ.get("L3_URL", "http://localhost:9000/generate")
 MAX_TOKENS = int(os.environ.get("L2_MAX_TOKENS", "64"))
 TEMPERATURE = float(os.environ.get("L2_TEMPERATURE", "0.8"))
 
+# AGENT_MODE=1 routes through the ReAct agent loop in agent_loop.py
+# (requires L3 to be serving an agent-SFT'd checkpoint from 00c_agent_sft).
+AGENT_MODE = os.environ.get("AGENT_MODE", "").lower() in ("1", "true", "yes")
+
 
 def build_prompt(query: str) -> str:
     """Frame the user's query for a base LM (no chat template, no tools).
@@ -52,9 +56,18 @@ def build_prompt(query: str) -> str:
 
 
 def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:
-    """Stream tokens from L3 back to the caller. `work_dir` is unused
-    (kept for L1 ABI compatibility — once tool use is added back it'll
-    matter again)."""
+    """Stream events from L3 back to the caller.
+
+    Two modes:
+      - default (chat completion): build prompt → POST → relay token events
+      - AGENT_MODE=1: route through agent_loop.run_agent (Plan→Act→Observe
+        with calc / lookup tools, requires agent-SFT'd checkpoint)
+    """
+    if AGENT_MODE:
+        from agent_loop import run_agent as run_loop  # local import — avoids tools.py side effects
+        yield from run_loop(query, work_dir=work_dir)
+        return
+
     payload = json.dumps({
         "prompt": build_prompt(query),
         "max_tokens": MAX_TOKENS,
@@ -96,14 +109,26 @@ def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python agent.py '<your query>'", file=sys.stderr)
+        print("  set AGENT_MODE=1 to use the ReAct agent loop "
+              "(needs agent-SFT'd ckpt in L3)", file=sys.stderr)
         sys.exit(2)
-    print(f"[L2] prompt: {build_prompt(sys.argv[1])!r}")
-    print(f"[L2] streaming from {L3_URL} ...\n")
+    if AGENT_MODE:
+        print(f"[L2] AGENT_MODE — running ReAct loop on {L3_URL}\n")
+    else:
+        print(f"[L2] prompt: {build_prompt(sys.argv[1])!r}")
+        print(f"[L2] streaming from {L3_URL} ...\n")
     for ev in run_agent(sys.argv[1]):
-        if ev["type"] == "token":
+        t = ev["type"]
+        if t == "token":
             sys.stdout.write(ev["v"]); sys.stdout.flush()
-        elif ev["type"] == "done":
+        elif t == "thought":
+            print(f"💭 {ev['v']}")
+        elif t == "action":
+            print(f"🔧 {ev['v']}")
+        elif t == "observation":
+            print(f"   ↳ {ev['v']}")
+        elif t == "done":
             print("\n\n[done]")
-        elif ev["type"] == "error":
+        elif t == "error":
             print(f"\n[error] {ev['message']}", file=sys.stderr)
             sys.exit(1)

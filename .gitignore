@@ -28,3 +28,6 @@ site/
 
 # Claude Code session artifacts
 .claude/
+
+# L0.6 Agent SFT artifacts
+00c_agent_sft/out/

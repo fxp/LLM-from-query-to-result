@@ -1,0 +1,2840 @@
+[
+  {
+    "q": "Who wrote Macbeth?",
+    "trace": [
+      {
+        "thought": "I should look up author of Macbeth.",
+        "action": "lookup(author of Macbeth)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is 2 * 5?",
+    "trace": [
+      {
+        "thought": "I need to compute 2 * 5.",
+        "action": "calc(2 * 5)",
+        "observation": "10"
+      }
+    ],
+    "answer": "10."
+  },
+  {
+    "q": "Who wrote Anna Karenina?",
+    "trace": [
+      {
+        "thought": "I should look up author of Anna Karenina.",
+        "action": "lookup(author of Anna Karenina)",
+        "observation": "Tolstoy"
+      }
+    ],
+    "answer": "Tolstoy."
+  },
+  {
+    "q": "What's the capital of Mexico?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Mexico.",
+        "action": "lookup(capital of Mexico)",
+        "observation": "Mexico City"
+      }
+    ],
+    "answer": "Mexico City."
+  },
+  {
+    "q": "What's the capital of Spain?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Spain.",
+        "action": "lookup(capital of Spain)",
+        "observation": "Madrid"
+      }
+    ],
+    "answer": "Madrid."
+  },
+  {
+    "q": "What is the capital of Peru?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Peru.",
+        "action": "lookup(capital of Peru)",
+        "observation": "Lima"
+      }
+    ],
+    "answer": "Lima."
+  },
+  {
+    "q": "Who wrote Don Quixote?",
+    "trace": [
+      {
+        "thought": "I should look up author of Don Quixote.",
+        "action": "lookup(author of Don Quixote)",
+        "observation": "Cervantes"
+      }
+    ],
+    "answer": "Cervantes."
+  },
+  {
+    "q": "What's the capital of Hungary?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Hungary.",
+        "action": "lookup(capital of Hungary)",
+        "observation": "Budapest"
+      }
+    ],
+    "answer": "Budapest."
+  },
+  {
+    "q": "What is 11 times 15?",
+    "trace": [
+      {
+        "thought": "I need to compute 11 * 15.",
+        "action": "calc(11 * 15)",
+        "observation": "165"
+      }
+    ],
+    "answer": "165."
+  },
+  {
+    "q": "What's the capital of Ukraine?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Ukraine.",
+        "action": "lookup(capital of Ukraine)",
+        "observation": "Kyiv"
+      }
+    ],
+    "answer": "Kyiv."
+  },
+  {
+    "q": "What is (2 + 13) * 6?",
+    "trace": [
+      {
+        "thought": "I need to compute (2 + 13) * 6.",
+        "action": "calc((2 + 13) * 6)",
+        "observation": "90"
+      }
+    ],
+    "answer": "90."
+  },
+  {
+    "q": "Who painted Mona Lisa?",
+    "trace": [
+      {
+        "thought": "I should look up painter of Mona Lisa.",
+        "action": "lookup(painter of Mona Lisa)",
+        "observation": "Leonardo da Vinci"
+      }
+    ],
+    "answer": "Leonardo da Vinci."
+  },
+  {
+    "q": "What's the capital of Vietnam?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Vietnam.",
+        "action": "lookup(capital of Vietnam)",
+        "observation": "Hanoi"
+      }
+    ],
+    "answer": "Hanoi."
+  },
+  {
+    "q": "What is 193 - 138?",
+    "trace": [
+      {
+        "thought": "I need to compute 193 - 138.",
+        "action": "calc(193 - 138)",
+        "observation": "55"
+      }
+    ],
+    "answer": "55."
+  },
+  {
+    "q": "What is 82 plus 15?",
+    "trace": [
+      {
+        "thought": "I need to compute 82 + 15.",
+        "action": "calc(82 + 15)",
+        "observation": "97"
+      }
+    ],
+    "answer": "97."
+  },
+  {
+    "q": "Calculate 13 + 46.",
+    "trace": [
+      {
+        "thought": "I need to compute 13 + 46.",
+        "action": "calc(13 + 46)",
+        "observation": "59"
+      }
+    ],
+    "answer": "59."
+  },
+  {
+    "q": "What is the chemical symbol of mercury?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of mercury.",
+        "action": "lookup(chemical symbol of mercury)",
+        "observation": "Hg"
+      }
+    ],
+    "answer": "Hg."
+  },
+  {
+    "q": "What is the capital of Canada?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Canada.",
+        "action": "lookup(capital of Canada)",
+        "observation": "Ottawa"
+      }
+    ],
+    "answer": "Ottawa."
+  },
+  {
+    "q": "What is the capital of Denmark?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Denmark.",
+        "action": "lookup(capital of Denmark)",
+        "observation": "Copenhagen"
+      }
+    ],
+    "answer": "Copenhagen."
+  },
+  {
+    "q": "What is 11 times 9?",
+    "trace": [
+      {
+        "thought": "I need to compute 11 * 9.",
+        "action": "calc(11 * 9)",
+        "observation": "99"
+      }
+    ],
+    "answer": "99."
+  },
+  {
+    "q": "What is 23 times 25?",
+    "trace": [
+      {
+        "thought": "I need to compute 23 * 25.",
+        "action": "calc(23 * 25)",
+        "observation": "575"
+      }
+    ],
+    "answer": "575."
+  },
+  {
+    "q": "What's the capital of South Korea?",
+    "trace": [
+      {
+        "thought": "I should look up capital of South Korea.",
+        "action": "lookup(capital of South Korea)",
+        "observation": "Seoul"
+      }
+    ],
+    "answer": "Seoul."
+  },
+  {
+    "q": "Who wrote Pride and Prejudice?",
+    "trace": [
+      {
+        "thought": "I should look up author of Pride and Prejudice.",
+        "action": "lookup(author of Pride and Prejudice)",
+        "observation": "Austen"
+      }
+    ],
+    "answer": "Austen."
+  },
+  {
+    "q": "What is 150 divided by 10?",
+    "trace": [
+      {
+        "thought": "I need to compute 150 / 10.",
+        "action": "calc(150 / 10)",
+        "observation": "15"
+      }
+    ],
+    "answer": "15."
+  },
+  {
+    "q": "What is 18 times 7?",
+    "trace": [
+      {
+        "thought": "I need to compute 18 * 7.",
+        "action": "calc(18 * 7)",
+        "observation": "126"
+      }
+    ],
+    "answer": "126."
+  },
+  {
+    "q": "What is the capital of US?",
+    "trace": [
+      {
+        "thought": "I should look up capital of US.",
+        "action": "lookup(capital of US)",
+        "observation": "Washington"
+      }
+    ],
+    "answer": "Washington."
+  },
+  {
+    "q": "What's the capital of Saudi Arabia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Saudi Arabia.",
+        "action": "lookup(capital of Saudi Arabia)",
+        "observation": "Riyadh"
+      }
+    ],
+    "answer": "Riyadh."
+  },
+  {
+    "q": "What is the longest river in South America?",
+    "trace": [
+      {
+        "thought": "I should look up longest river in South America.",
+        "action": "lookup(longest river in South America)",
+        "observation": "Amazon"
+      }
+    ],
+    "answer": "The Amazon."
+  },
+  {
+    "q": "What is the capital of Portugal?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Portugal.",
+        "action": "lookup(capital of Portugal)",
+        "observation": "Lisbon"
+      }
+    ],
+    "answer": "Lisbon."
+  },
+  {
+    "q": "What's 46 + 27?",
+    "trace": [
+      {
+        "thought": "I need to compute 46 + 27.",
+        "action": "calc(46 + 27)",
+        "observation": "73"
+      }
+    ],
+    "answer": "73."
+  },
+  {
+    "q": "What's 35 + 90?",
+    "trace": [
+      {
+        "thought": "I need to compute 35 + 90.",
+        "action": "calc(35 + 90)",
+        "observation": "125"
+      }
+    ],
+    "answer": "125."
+  },
+  {
+    "q": "What is the capital of Mexico?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Mexico.",
+        "action": "lookup(capital of Mexico)",
+        "observation": "Mexico City"
+      }
+    ],
+    "answer": "Mexico City."
+  },
+  {
+    "q": "What's the capital of Indonesia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Indonesia.",
+        "action": "lookup(capital of Indonesia)",
+        "observation": "Jakarta"
+      }
+    ],
+    "answer": "Jakarta."
+  },
+  {
+    "q": "What is the capital of Singapore?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Singapore.",
+        "action": "lookup(capital of Singapore)",
+        "observation": "Singapore"
+      }
+    ],
+    "answer": "Singapore."
+  },
+  {
+    "q": "What is 104 - 84?",
+    "trace": [
+      {
+        "thought": "I need to compute 104 - 84.",
+        "action": "calc(104 - 84)",
+        "observation": "20"
+      }
+    ],
+    "answer": "20."
+  },
+  {
+    "q": "Who is the author of Animal Farm?",
+    "trace": [
+      {
+        "thought": "I should look up author of Animal Farm.",
+        "action": "lookup(author of Animal Farm)",
+        "observation": "Orwell"
+      }
+    ],
+    "answer": "Orwell."
+  },
+  {
+    "q": "Who is the author of Pride and Prejudice?",
+    "trace": [
+      {
+        "thought": "I should look up author of Pride and Prejudice.",
+        "action": "lookup(author of Pride and Prejudice)",
+        "observation": "Austen"
+      }
+    ],
+    "answer": "Austen."
+  },
+  {
+    "q": "What is the capital of Russia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Russia.",
+        "action": "lookup(capital of Russia)",
+        "observation": "Moscow"
+      }
+    ],
+    "answer": "Moscow."
+  },
+  {
+    "q": "What is (3 + 11) * 1?",
+    "trace": [
+      {
+        "thought": "I need to compute (3 + 11) * 1.",
+        "action": "calc((3 + 11) * 1)",
+        "observation": "14"
+      }
+    ],
+    "answer": "14."
+  },
+  {
+    "q": "What is 90 divided by 5?",
+    "trace": [
+      {
+        "thought": "I need to compute 90 / 5.",
+        "action": "calc(90 / 5)",
+        "observation": "18"
+      }
+    ],
+    "answer": "18."
+  },
+  {
+    "q": "What is 104 - 73?",
+    "trace": [
+      {
+        "thought": "I need to compute 104 - 73.",
+        "action": "calc(104 - 73)",
+        "observation": "31"
+      }
+    ],
+    "answer": "31."
+  },
+  {
+    "q": "What is 99 plus 38?",
+    "trace": [
+      {
+        "thought": "I need to compute 99 + 38.",
+        "action": "calc(99 + 38)",
+        "observation": "137"
+      }
+    ],
+    "answer": "137."
+  },
+  {
+    "q": "What's 80 + 47?",
+    "trace": [
+      {
+        "thought": "I need to compute 80 + 47.",
+        "action": "calc(80 + 47)",
+        "observation": "127"
+      }
+    ],
+    "answer": "127."
+  },
+  {
+    "q": "What is the capital of Argentina?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Argentina.",
+        "action": "lookup(capital of Argentina)",
+        "observation": "Buenos Aires"
+      }
+    ],
+    "answer": "Buenos Aires."
+  },
+  {
+    "q": "What is the largest ocean?",
+    "trace": [
+      {
+        "thought": "I should look up largest ocean.",
+        "action": "lookup(largest ocean)",
+        "observation": "Pacific"
+      }
+    ],
+    "answer": "Pacific."
+  },
+  {
+    "q": "What is the smallest country?",
+    "trace": [
+      {
+        "thought": "I should look up smallest country.",
+        "action": "lookup(smallest country)",
+        "observation": "Vatican City"
+      }
+    ],
+    "answer": "Vatican City."
+  },
+  {
+    "q": "What is the capital of Sweden?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Sweden.",
+        "action": "lookup(capital of Sweden)",
+        "observation": "Stockholm"
+      }
+    ],
+    "answer": "Stockholm."
+  },
+  {
+    "q": "What is (19 + 19) * 8?",
+    "trace": [
+      {
+        "thought": "I need to compute (19 + 19) * 8.",
+        "action": "calc((19 + 19) * 8)",
+        "observation": "304"
+      }
+    ],
+    "answer": "304."
+  },
+  {
+    "q": "What is the capital of China?",
+    "trace": [
+      {
+        "thought": "I should look up capital of China.",
+        "action": "lookup(capital of China)",
+        "observation": "Beijing"
+      }
+    ],
+    "answer": "Beijing."
+  },
+  {
+    "q": "What is the days in a week?",
+    "trace": [
+      {
+        "thought": "I should look up days in a week.",
+        "action": "lookup(days in a week)",
+        "observation": "7"
+      }
+    ],
+    "answer": "7."
+  },
+  {
+    "q": "What is 72 divided by 4?",
+    "trace": [
+      {
+        "thought": "I need to compute 72 / 4.",
+        "action": "calc(72 / 4)",
+        "observation": "18"
+      }
+    ],
+    "answer": "18."
+  },
+  {
+    "q": "What is 25 plus 91?",
+    "trace": [
+      {
+        "thought": "I need to compute 25 + 91.",
+        "action": "calc(25 + 91)",
+        "observation": "116"
+      }
+    ],
+    "answer": "116."
+  },
+  {
+    "q": "What's the capital of US?",
+    "trace": [
+      {
+        "thought": "I should look up capital of US.",
+        "action": "lookup(capital of US)",
+        "observation": "Washington"
+      }
+    ],
+    "answer": "Washington."
+  },
+  {
+    "q": "What's 70 + 12?",
+    "trace": [
+      {
+        "thought": "I need to compute 70 + 12.",
+        "action": "calc(70 + 12)",
+        "observation": "82"
+      }
+    ],
+    "answer": "82."
+  },
+  {
+    "q": "What is the longest river in Asia?",
+    "trace": [
+      {
+        "thought": "I should look up longest river in Asia.",
+        "action": "lookup(longest river in Asia)",
+        "observation": "Yangtze"
+      }
+    ],
+    "answer": "The Yangtze."
+  },
+  {
+    "q": "What's the capital of India?",
+    "trace": [
+      {
+        "thought": "I should look up capital of India.",
+        "action": "lookup(capital of India)",
+        "observation": "New Delhi"
+      }
+    ],
+    "answer": "New Delhi."
+  },
+  {
+    "q": "What is the chemical symbol of iron?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of iron.",
+        "action": "lookup(chemical symbol of iron)",
+        "observation": "Fe"
+      }
+    ],
+    "answer": "Fe."
+  },
+  {
+    "q": "What is the capital of India?",
+    "trace": [
+      {
+        "thought": "I should look up capital of India.",
+        "action": "lookup(capital of India)",
+        "observation": "New Delhi"
+      }
+    ],
+    "answer": "New Delhi."
+  },
+  {
+    "q": "What's the capital of Switzerland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Switzerland.",
+        "action": "lookup(capital of Switzerland)",
+        "observation": "Bern"
+      }
+    ],
+    "answer": "Bern."
+  },
+  {
+    "q": "What's the capital of Singapore?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Singapore.",
+        "action": "lookup(capital of Singapore)",
+        "observation": "Singapore"
+      }
+    ],
+    "answer": "Singapore."
+  },
+  {
+    "q": "What's the capital of Canada?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Canada.",
+        "action": "lookup(capital of Canada)",
+        "observation": "Ottawa"
+      }
+    ],
+    "answer": "Ottawa."
+  },
+  {
+    "q": "What is the freezing point of water in Celsius?",
+    "trace": [
+      {
+        "thought": "I should look up freezing point of water in Celsius.",
+        "action": "lookup(freezing point of water in Celsius)",
+        "observation": "0"
+      }
+    ],
+    "answer": "0."
+  },
+  {
+    "q": "Who painted Guernica?",
+    "trace": [
+      {
+        "thought": "I should look up painter of Guernica.",
+        "action": "lookup(painter of Guernica)",
+        "observation": "Picasso"
+      }
+    ],
+    "answer": "Picasso."
+  },
+  {
+    "q": "What is the capital of Turkey?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Turkey.",
+        "action": "lookup(capital of Turkey)",
+        "observation": "Ankara"
+      }
+    ],
+    "answer": "Ankara."
+  },
+  {
+    "q": "What is the capital of Austria?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Austria.",
+        "action": "lookup(capital of Austria)",
+        "observation": "Vienna"
+      }
+    ],
+    "answer": "Vienna."
+  },
+  {
+    "q": "What is the capital of New Zealand?",
+    "trace": [
+      {
+        "thought": "I should look up capital of New Zealand.",
+        "action": "lookup(capital of New Zealand)",
+        "observation": "Wellington"
+      }
+    ],
+    "answer": "Wellington."
+  },
+  {
+    "q": "What's 29 + 18?",
+    "trace": [
+      {
+        "thought": "I need to compute 29 + 18.",
+        "action": "calc(29 + 18)",
+        "observation": "47"
+      }
+    ],
+    "answer": "47."
+  },
+  {
+    "q": "What is the capital of Brazil?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Brazil.",
+        "action": "lookup(capital of Brazil)",
+        "observation": "Brasilia"
+      }
+    ],
+    "answer": "Brasilia."
+  },
+  {
+    "q": "What is the largest desert in the world?",
+    "trace": [
+      {
+        "thought": "I should look up largest desert in the world.",
+        "action": "lookup(largest desert in the world)",
+        "observation": "Sahara"
+      }
+    ],
+    "answer": "Sahara."
+  },
+  {
+    "q": "What is 117 minus 18?",
+    "trace": [
+      {
+        "thought": "I need to compute 117 - 18.",
+        "action": "calc(117 - 18)",
+        "observation": "99"
+      }
+    ],
+    "answer": "99."
+  },
+  {
+    "q": "What's the capital of England?",
+    "trace": [
+      {
+        "thought": "I should look up capital of England.",
+        "action": "lookup(capital of England)",
+        "observation": "London"
+      }
+    ],
+    "answer": "London."
+  },
+  {
+    "q": "What's the capital of Finland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Finland.",
+        "action": "lookup(capital of Finland)",
+        "observation": "Helsinki"
+      }
+    ],
+    "answer": "Helsinki."
+  },
+  {
+    "q": "What is the chemical symbol of nitrogen?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of nitrogen.",
+        "action": "lookup(chemical symbol of nitrogen)",
+        "observation": "N"
+      }
+    ],
+    "answer": "N."
+  },
+  {
+    "q": "What's the capital of China?",
+    "trace": [
+      {
+        "thought": "I should look up capital of China.",
+        "action": "lookup(capital of China)",
+        "observation": "Beijing"
+      }
+    ],
+    "answer": "Beijing."
+  },
+  {
+    "q": "Who is the author of The Great Gatsby?",
+    "trace": [
+      {
+        "thought": "I should look up author of The Great Gatsby.",
+        "action": "lookup(author of The Great Gatsby)",
+        "observation": "Fitzgerald"
+      }
+    ],
+    "answer": "Fitzgerald."
+  },
+  {
+    "q": "What is (2 + 8) * 2?",
+    "trace": [
+      {
+        "thought": "I need to compute (2 + 8) * 2.",
+        "action": "calc((2 + 8) * 2)",
+        "observation": "20"
+      }
+    ],
+    "answer": "20."
+  },
+  {
+    "q": "What is 68 minus 22?",
+    "trace": [
+      {
+        "thought": "I need to compute 68 - 22.",
+        "action": "calc(68 - 22)",
+        "observation": "46"
+      }
+    ],
+    "answer": "46."
+  },
+  {
+    "q": "What's 14 + 87?",
+    "trace": [
+      {
+        "thought": "I need to compute 14 + 87.",
+        "action": "calc(14 + 87)",
+        "observation": "101"
+      }
+    ],
+    "answer": "101."
+  },
+  {
+    "q": "What is 19 times 18?",
+    "trace": [
+      {
+        "thought": "I need to compute 19 * 18.",
+        "action": "calc(19 * 18)",
+        "observation": "342"
+      }
+    ],
+    "answer": "342."
+  },
+  {
+    "q": "What is 152 minus 69?",
+    "trace": [
+      {
+        "thought": "I need to compute 152 - 69.",
+        "action": "calc(152 - 69)",
+        "observation": "83"
+      }
+    ],
+    "answer": "83."
+  },
+  {
+    "q": "What is the chemical symbol of oxygen?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of oxygen.",
+        "action": "lookup(chemical symbol of oxygen)",
+        "observation": "O"
+      }
+    ],
+    "answer": "O."
+  },
+  {
+    "q": "What's the capital of Peru?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Peru.",
+        "action": "lookup(capital of Peru)",
+        "observation": "Lima"
+      }
+    ],
+    "answer": "Lima."
+  },
+  {
+    "q": "What is the capital of Nigeria?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Nigeria.",
+        "action": "lookup(capital of Nigeria)",
+        "observation": "Abuja"
+      }
+    ],
+    "answer": "Abuja."
+  },
+  {
+    "q": "What's 84 + 90?",
+    "trace": [
+      {
+        "thought": "I need to compute 84 + 90.",
+        "action": "calc(84 + 90)",
+        "observation": "174"
+      }
+    ],
+    "answer": "174."
+  },
+  {
+    "q": "What is the capital of Italy?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Italy.",
+        "action": "lookup(capital of Italy)",
+        "observation": "Rome"
+      }
+    ],
+    "answer": "Rome."
+  },
+  {
+    "q": "What's the capital of Turkey?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Turkey.",
+        "action": "lookup(capital of Turkey)",
+        "observation": "Ankara"
+      }
+    ],
+    "answer": "Ankara."
+  },
+  {
+    "q": "What is 91 - 60?",
+    "trace": [
+      {
+        "thought": "I need to compute 91 - 60.",
+        "action": "calc(91 - 60)",
+        "observation": "31"
+      }
+    ],
+    "answer": "31."
+  },
+  {
+    "q": "What's the capital of Portugal?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Portugal.",
+        "action": "lookup(capital of Portugal)",
+        "observation": "Lisbon"
+      }
+    ],
+    "answer": "Lisbon."
+  },
+  {
+    "q": "What's 98 + 21?",
+    "trace": [
+      {
+        "thought": "I need to compute 98 + 21.",
+        "action": "calc(98 + 21)",
+        "observation": "119"
+      }
+    ],
+    "answer": "119."
+  },
+  {
+    "q": "What's the capital of France?",
+    "trace": [
+      {
+        "thought": "I should look up capital of France.",
+        "action": "lookup(capital of France)",
+        "observation": "Paris"
+      }
+    ],
+    "answer": "Paris."
+  },
+  {
+    "q": "What is (19 + 8) * 1?",
+    "trace": [
+      {
+        "thought": "I need to compute (19 + 8) * 1.",
+        "action": "calc((19 + 8) * 1)",
+        "observation": "27"
+      }
+    ],
+    "answer": "27."
+  },
+  {
+    "q": "Who is the author of King Lear?",
+    "trace": [
+      {
+        "thought": "I should look up author of King Lear.",
+        "action": "lookup(author of King Lear)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is the capital of Chile?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Chile.",
+        "action": "lookup(capital of Chile)",
+        "observation": "Santiago"
+      }
+    ],
+    "answer": "Santiago."
+  },
+  {
+    "q": "Who is the author of War and Peace?",
+    "trace": [
+      {
+        "thought": "I should look up author of War and Peace.",
+        "action": "lookup(author of War and Peace)",
+        "observation": "Tolstoy"
+      }
+    ],
+    "answer": "Tolstoy."
+  },
+  {
+    "q": "What is the capital of Indonesia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Indonesia.",
+        "action": "lookup(capital of Indonesia)",
+        "observation": "Jakarta"
+      }
+    ],
+    "answer": "Jakarta."
+  },
+  {
+    "q": "What is 6 plus 85?",
+    "trace": [
+      {
+        "thought": "I need to compute 6 + 85.",
+        "action": "calc(6 + 85)",
+        "observation": "91"
+      }
+    ],
+    "answer": "91."
+  },
+  {
+    "q": "What is the days in a year?",
+    "trace": [
+      {
+        "thought": "I should look up days in a year.",
+        "action": "lookup(days in a year)",
+        "observation": "365"
+      }
+    ],
+    "answer": "365."
+  },
+  {
+    "q": "What is 88 divided by 8?",
+    "trace": [
+      {
+        "thought": "I need to compute 88 / 8.",
+        "action": "calc(88 / 8)",
+        "observation": "11"
+      }
+    ],
+    "answer": "11."
+  },
+  {
+    "q": "Who wrote Othello?",
+    "trace": [
+      {
+        "thought": "I should look up author of Othello.",
+        "action": "lookup(author of Othello)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is the capital of Netherlands?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Netherlands.",
+        "action": "lookup(capital of Netherlands)",
+        "observation": "Amsterdam"
+      }
+    ],
+    "answer": "Amsterdam."
+  },
+  {
+    "q": "What is (14 + 15) * 1?",
+    "trace": [
+      {
+        "thought": "I need to compute (14 + 15) * 1.",
+        "action": "calc((14 + 15) * 1)",
+        "observation": "29"
+      }
+    ],
+    "answer": "29."
+  },
+  {
+    "q": "What is 57 divided by 3?",
+    "trace": [
+      {
+        "thought": "I need to compute 57 / 3.",
+        "action": "calc(57 / 3)",
+        "observation": "19"
+      }
+    ],
+    "answer": "19."
+  },
+  {
+    "q": "What is 6 times 22?",
+    "trace": [
+      {
+        "thought": "I need to compute 6 * 22.",
+        "action": "calc(6 * 22)",
+        "observation": "132"
+      }
+    ],
+    "answer": "132."
+  },
+  {
+    "q": "What's the capital of Italy?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Italy.",
+        "action": "lookup(capital of Italy)",
+        "observation": "Rome"
+      }
+    ],
+    "answer": "Rome."
+  },
+  {
+    "q": "What is (9 + 16) * 4?",
+    "trace": [
+      {
+        "thought": "I need to compute (9 + 16) * 4.",
+        "action": "calc((9 + 16) * 4)",
+        "observation": "100"
+      }
+    ],
+    "answer": "100."
+  },
+  {
+    "q": "What is 95 plus 36?",
+    "trace": [
+      {
+        "thought": "I need to compute 95 + 36.",
+        "action": "calc(95 + 36)",
+        "observation": "131"
+      }
+    ],
+    "answer": "131."
+  },
+  {
+    "q": "Who is the author of Sense and Sensibility?",
+    "trace": [
+      {
+        "thought": "I should look up author of Sense and Sensibility.",
+        "action": "lookup(author of Sense and Sensibility)",
+        "observation": "Austen"
+      }
+    ],
+    "answer": "Austen."
+  },
+  {
+    "q": "What's the capital of UK?",
+    "trace": [
+      {
+        "thought": "I should look up capital of UK.",
+        "action": "lookup(capital of UK)",
+        "observation": "London"
+      }
+    ],
+    "answer": "London."
+  },
+  {
+    "q": "What is the capital of Spain?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Spain.",
+        "action": "lookup(capital of Spain)",
+        "observation": "Madrid"
+      }
+    ],
+    "answer": "Madrid."
+  },
+  {
+    "q": "What is 151 minus 118?",
+    "trace": [
+      {
+        "thought": "I need to compute 151 - 118.",
+        "action": "calc(151 - 118)",
+        "observation": "33"
+      }
+    ],
+    "answer": "33."
+  },
+  {
+    "q": "What is the capital of Greece?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Greece.",
+        "action": "lookup(capital of Greece)",
+        "observation": "Athens"
+      }
+    ],
+    "answer": "Athens."
+  },
+  {
+    "q": "Who painted Sunflowers?",
+    "trace": [
+      {
+        "thought": "I should look up painter of Sunflowers.",
+        "action": "lookup(painter of Sunflowers)",
+        "observation": "van Gogh"
+      }
+    ],
+    "answer": "van Gogh."
+  },
+  {
+    "q": "What is the capital of Saudi Arabia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Saudi Arabia.",
+        "action": "lookup(capital of Saudi Arabia)",
+        "observation": "Riyadh"
+      }
+    ],
+    "answer": "Riyadh."
+  },
+  {
+    "q": "What is 58 - 52?",
+    "trace": [
+      {
+        "thought": "I need to compute 58 - 52.",
+        "action": "calc(58 - 52)",
+        "observation": "6"
+      }
+    ],
+    "answer": "6."
+  },
+  {
+    "q": "Who is the author of The Tempest?",
+    "trace": [
+      {
+        "thought": "I should look up author of The Tempest.",
+        "action": "lookup(author of The Tempest)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What's the capital of USA?",
+    "trace": [
+      {
+        "thought": "I should look up capital of USA.",
+        "action": "lookup(capital of USA)",
+        "observation": "Washington"
+      }
+    ],
+    "answer": "Washington."
+  },
+  {
+    "q": "What's the capital of Brazil?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Brazil.",
+        "action": "lookup(capital of Brazil)",
+        "observation": "Brasilia"
+      }
+    ],
+    "answer": "Brasilia."
+  },
+  {
+    "q": "Who wrote The Great Gatsby?",
+    "trace": [
+      {
+        "thought": "I should look up author of The Great Gatsby.",
+        "action": "lookup(author of The Great Gatsby)",
+        "observation": "Fitzgerald"
+      }
+    ],
+    "answer": "Fitzgerald."
+  },
+  {
+    "q": "What's the capital of Japan?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Japan.",
+        "action": "lookup(capital of Japan)",
+        "observation": "Tokyo"
+      }
+    ],
+    "answer": "Tokyo."
+  },
+  {
+    "q": "What's the capital of Chile?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Chile.",
+        "action": "lookup(capital of Chile)",
+        "observation": "Santiago"
+      }
+    ],
+    "answer": "Santiago."
+  },
+  {
+    "q": "Who is the author of The Brothers Karamazov?",
+    "trace": [
+      {
+        "thought": "I should look up author of The Brothers Karamazov.",
+        "action": "lookup(author of The Brothers Karamazov)",
+        "observation": "Dostoevsky"
+      }
+    ],
+    "answer": "Dostoevsky."
+  },
+  {
+    "q": "Who wrote Faust?",
+    "trace": [
+      {
+        "thought": "I should look up author of Faust.",
+        "action": "lookup(author of Faust)",
+        "observation": "Goethe"
+      }
+    ],
+    "answer": "Goethe."
+  },
+  {
+    "q": "What is the capital of Hungary?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Hungary.",
+        "action": "lookup(capital of Hungary)",
+        "observation": "Budapest"
+      }
+    ],
+    "answer": "Budapest."
+  },
+  {
+    "q": "What is 76 plus 36?",
+    "trace": [
+      {
+        "thought": "I need to compute 76 + 36.",
+        "action": "calc(76 + 36)",
+        "observation": "112"
+      }
+    ],
+    "answer": "112."
+  },
+  {
+    "q": "What is 65 divided by 5?",
+    "trace": [
+      {
+        "thought": "I need to compute 65 / 5.",
+        "action": "calc(65 / 5)",
+        "observation": "13"
+      }
+    ],
+    "answer": "13."
+  },
+  {
+    "q": "What is the capital of Egypt?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Egypt.",
+        "action": "lookup(capital of Egypt)",
+        "observation": "Cairo"
+      }
+    ],
+    "answer": "Cairo."
+  },
+  {
+    "q": "What's the capital of Australia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Australia.",
+        "action": "lookup(capital of Australia)",
+        "observation": "Canberra"
+      }
+    ],
+    "answer": "Canberra."
+  },
+  {
+    "q": "What's the capital of Norway?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Norway.",
+        "action": "lookup(capital of Norway)",
+        "observation": "Oslo"
+      }
+    ],
+    "answer": "Oslo."
+  },
+  {
+    "q": "What's the capital of Denmark?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Denmark.",
+        "action": "lookup(capital of Denmark)",
+        "observation": "Copenhagen"
+      }
+    ],
+    "answer": "Copenhagen."
+  },
+  {
+    "q": "What is the chemical symbol of water?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of water.",
+        "action": "lookup(chemical symbol of water)",
+        "observation": "H2O"
+      }
+    ],
+    "answer": "H2O."
+  },
+  {
+    "q": "What is the capital of Poland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Poland.",
+        "action": "lookup(capital of Poland)",
+        "observation": "Warsaw"
+      }
+    ],
+    "answer": "Warsaw."
+  },
+  {
+    "q": "What is the capital of Norway?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Norway.",
+        "action": "lookup(capital of Norway)",
+        "observation": "Oslo"
+      }
+    ],
+    "answer": "Oslo."
+  },
+  {
+    "q": "What is the longest river in the world?",
+    "trace": [
+      {
+        "thought": "I should look up longest river in the world.",
+        "action": "lookup(longest river in the world)",
+        "observation": "Nile"
+      }
+    ],
+    "answer": "The Nile."
+  },
+  {
+    "q": "What is the chemical symbol of sodium?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of sodium.",
+        "action": "lookup(chemical symbol of sodium)",
+        "observation": "Na"
+      }
+    ],
+    "answer": "Na."
+  },
+  {
+    "q": "What's the capital of South Africa?",
+    "trace": [
+      {
+        "thought": "I should look up capital of South Africa.",
+        "action": "lookup(capital of South Africa)",
+        "observation": "Pretoria"
+      }
+    ],
+    "answer": "Pretoria."
+  },
+  {
+    "q": "Who wrote Emma?",
+    "trace": [
+      {
+        "thought": "I should look up author of Emma.",
+        "action": "lookup(author of Emma)",
+        "observation": "Austen"
+      }
+    ],
+    "answer": "Austen."
+  },
+  {
+    "q": "Calculate 55 + 44.",
+    "trace": [
+      {
+        "thought": "I need to compute 55 + 44.",
+        "action": "calc(55 + 44)",
+        "observation": "99"
+      }
+    ],
+    "answer": "99."
+  },
+  {
+    "q": "What is the capital of Kenya?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Kenya.",
+        "action": "lookup(capital of Kenya)",
+        "observation": "Nairobi"
+      }
+    ],
+    "answer": "Nairobi."
+  },
+  {
+    "q": "What is the capital of Australia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Australia.",
+        "action": "lookup(capital of Australia)",
+        "observation": "Canberra"
+      }
+    ],
+    "answer": "Canberra."
+  },
+  {
+    "q": "What is the capital of Iraq?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Iraq.",
+        "action": "lookup(capital of Iraq)",
+        "observation": "Baghdad"
+      }
+    ],
+    "answer": "Baghdad."
+  },
+  {
+    "q": "What is 12 plus 28?",
+    "trace": [
+      {
+        "thought": "I need to compute 12 + 28.",
+        "action": "calc(12 + 28)",
+        "observation": "40"
+      }
+    ],
+    "answer": "40."
+  },
+  {
+    "q": "What's the capital of Argentina?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Argentina.",
+        "action": "lookup(capital of Argentina)",
+        "observation": "Buenos Aires"
+      }
+    ],
+    "answer": "Buenos Aires."
+  },
+  {
+    "q": "What is the longest river in Africa?",
+    "trace": [
+      {
+        "thought": "I should look up longest river in Africa.",
+        "action": "lookup(longest river in Africa)",
+        "observation": "Nile"
+      }
+    ],
+    "answer": "The Nile."
+  },
+  {
+    "q": "What is 80 divided by 10?",
+    "trace": [
+      {
+        "thought": "I need to compute 80 / 10.",
+        "action": "calc(80 / 10)",
+        "observation": "8"
+      }
+    ],
+    "answer": "8."
+  },
+  {
+    "q": "Who is the author of Crime and Punishment?",
+    "trace": [
+      {
+        "thought": "I should look up author of Crime and Punishment.",
+        "action": "lookup(author of Crime and Punishment)",
+        "observation": "Dostoevsky"
+      }
+    ],
+    "answer": "Dostoevsky."
+  },
+  {
+    "q": "What is 22 times 12?",
+    "trace": [
+      {
+        "thought": "I need to compute 22 * 12.",
+        "action": "calc(22 * 12)",
+        "observation": "264"
+      }
+    ],
+    "answer": "264."
+  },
+  {
+    "q": "What is (16 + 14) * 4?",
+    "trace": [
+      {
+        "thought": "I need to compute (16 + 14) * 4.",
+        "action": "calc((16 + 14) * 4)",
+        "observation": "120"
+      }
+    ],
+    "answer": "120."
+  },
+  {
+    "q": "What is the hours in a day?",
+    "trace": [
+      {
+        "thought": "I should look up hours in a day.",
+        "action": "lookup(hours in a day)",
+        "observation": "24"
+      }
+    ],
+    "answer": "24."
+  },
+  {
+    "q": "What is 42 divided by 6?",
+    "trace": [
+      {
+        "thought": "I need to compute 42 / 6.",
+        "action": "calc(42 / 6)",
+        "observation": "7"
+      }
+    ],
+    "answer": "7."
+  },
+  {
+    "q": "What is the speed of light?",
+    "trace": [
+      {
+        "thought": "I should look up speed of light.",
+        "action": "lookup(speed of light)",
+        "observation": "300000 km/s"
+      }
+    ],
+    "answer": "300000 km/s."
+  },
+  {
+    "q": "What is the chemical symbol of lead?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of lead.",
+        "action": "lookup(chemical symbol of lead)",
+        "observation": "Pb"
+      }
+    ],
+    "answer": "Pb."
+  },
+  {
+    "q": "What is the capital of Germany?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Germany.",
+        "action": "lookup(capital of Germany)",
+        "observation": "Berlin"
+      }
+    ],
+    "answer": "Berlin."
+  },
+  {
+    "q": "What is the capital of Belgium?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Belgium.",
+        "action": "lookup(capital of Belgium)",
+        "observation": "Brussels"
+      }
+    ],
+    "answer": "Brussels."
+  },
+  {
+    "q": "What is the tallest mountain in the world?",
+    "trace": [
+      {
+        "thought": "I should look up tallest mountain in the world.",
+        "action": "lookup(tallest mountain in the world)",
+        "observation": "Mount Everest"
+      }
+    ],
+    "answer": "Mount Everest."
+  },
+  {
+    "q": "Who is the author of 1984?",
+    "trace": [
+      {
+        "thought": "I should look up author of 1984.",
+        "action": "lookup(author of 1984)",
+        "observation": "Orwell"
+      }
+    ],
+    "answer": "Orwell."
+  },
+  {
+    "q": "What is the capital of South Africa?",
+    "trace": [
+      {
+        "thought": "I should look up capital of South Africa.",
+        "action": "lookup(capital of South Africa)",
+        "observation": "Pretoria"
+      }
+    ],
+    "answer": "Pretoria."
+  },
+  {
+    "q": "What's the capital of Greece?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Greece.",
+        "action": "lookup(capital of Greece)",
+        "observation": "Athens"
+      }
+    ],
+    "answer": "Athens."
+  },
+  {
+    "q": "Who is the author of Macbeth?",
+    "trace": [
+      {
+        "thought": "I should look up author of Macbeth.",
+        "action": "lookup(author of Macbeth)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is 180 minus 127?",
+    "trace": [
+      {
+        "thought": "I need to compute 180 - 127.",
+        "action": "calc(180 - 127)",
+        "observation": "53"
+      }
+    ],
+    "answer": "53."
+  },
+  {
+    "q": "What's the capital of Iran?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Iran.",
+        "action": "lookup(capital of Iran)",
+        "observation": "Tehran"
+      }
+    ],
+    "answer": "Tehran."
+  },
+  {
+    "q": "What is the largest country?",
+    "trace": [
+      {
+        "thought": "I should look up largest country.",
+        "action": "lookup(largest country)",
+        "observation": "Russia"
+      }
+    ],
+    "answer": "Russia."
+  },
+  {
+    "q": "What is the capital of Vietnam?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Vietnam.",
+        "action": "lookup(capital of Vietnam)",
+        "observation": "Hanoi"
+      }
+    ],
+    "answer": "Hanoi."
+  },
+  {
+    "q": "What is the capital of Israel?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Israel.",
+        "action": "lookup(capital of Israel)",
+        "observation": "Jerusalem"
+      }
+    ],
+    "answer": "Jerusalem."
+  },
+  {
+    "q": "What's 71 + 38?",
+    "trace": [
+      {
+        "thought": "I need to compute 71 + 38.",
+        "action": "calc(71 + 38)",
+        "observation": "109"
+      }
+    ],
+    "answer": "109."
+  },
+  {
+    "q": "Who is the author of Don Quixote?",
+    "trace": [
+      {
+        "thought": "I should look up author of Don Quixote.",
+        "action": "lookup(author of Don Quixote)",
+        "observation": "Cervantes"
+      }
+    ],
+    "answer": "Cervantes."
+  },
+  {
+    "q": "What is the chemical symbol of gold?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of gold.",
+        "action": "lookup(chemical symbol of gold)",
+        "observation": "Au"
+      }
+    ],
+    "answer": "Au."
+  },
+  {
+    "q": "What is 78 plus 34?",
+    "trace": [
+      {
+        "thought": "I need to compute 78 + 34.",
+        "action": "calc(78 + 34)",
+        "observation": "112"
+      }
+    ],
+    "answer": "112."
+  },
+  {
+    "q": "Who is the author of Othello?",
+    "trace": [
+      {
+        "thought": "I should look up author of Othello.",
+        "action": "lookup(author of Othello)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is 119 minus 82?",
+    "trace": [
+      {
+        "thought": "I need to compute 119 - 82.",
+        "action": "calc(119 - 82)",
+        "observation": "37"
+      }
+    ],
+    "answer": "37."
+  },
+  {
+    "q": "What is the longest river in Europe?",
+    "trace": [
+      {
+        "thought": "I should look up longest river in Europe.",
+        "action": "lookup(longest river in Europe)",
+        "observation": "Volga"
+      }
+    ],
+    "answer": "The Volga."
+  },
+  {
+    "q": "What is the capital of UK?",
+    "trace": [
+      {
+        "thought": "I should look up capital of UK.",
+        "action": "lookup(capital of UK)",
+        "observation": "London"
+      }
+    ],
+    "answer": "London."
+  },
+  {
+    "q": "What is 65 plus 78?",
+    "trace": [
+      {
+        "thought": "I need to compute 65 + 78.",
+        "action": "calc(65 + 78)",
+        "observation": "143"
+      }
+    ],
+    "answer": "143."
+  },
+  {
+    "q": "Calculate 30 + 13.",
+    "trace": [
+      {
+        "thought": "I need to compute 30 + 13.",
+        "action": "calc(30 + 13)",
+        "observation": "43"
+      }
+    ],
+    "answer": "43."
+  },
+  {
+    "q": "What is 27 divided by 3?",
+    "trace": [
+      {
+        "thought": "I need to compute 27 / 3.",
+        "action": "calc(27 / 3)",
+        "observation": "9"
+      }
+    ],
+    "answer": "9."
+  },
+  {
+    "q": "What is the chemical symbol of silver?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of silver.",
+        "action": "lookup(chemical symbol of silver)",
+        "observation": "Ag"
+      }
+    ],
+    "answer": "Ag."
+  },
+  {
+    "q": "What is the capital of Finland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Finland.",
+        "action": "lookup(capital of Finland)",
+        "observation": "Helsinki"
+      }
+    ],
+    "answer": "Helsinki."
+  },
+  {
+    "q": "Who is the author of Romeo and Juliet?",
+    "trace": [
+      {
+        "thought": "I should look up author of Romeo and Juliet.",
+        "action": "lookup(author of Romeo and Juliet)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is 6 times 13?",
+    "trace": [
+      {
+        "thought": "I need to compute 6 * 13.",
+        "action": "calc(6 * 13)",
+        "observation": "78"
+      }
+    ],
+    "answer": "78."
+  },
+  {
+    "q": "What is the minutes in an hour?",
+    "trace": [
+      {
+        "thought": "I should look up minutes in an hour.",
+        "action": "lookup(minutes in an hour)",
+        "observation": "60"
+      }
+    ],
+    "answer": "60."
+  },
+  {
+    "q": "What's 72 + 26?",
+    "trace": [
+      {
+        "thought": "I need to compute 72 + 26.",
+        "action": "calc(72 + 26)",
+        "observation": "98"
+      }
+    ],
+    "answer": "98."
+  },
+  {
+    "q": "What is the chemical symbol of copper?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of copper.",
+        "action": "lookup(chemical symbol of copper)",
+        "observation": "Cu"
+      }
+    ],
+    "answer": "Cu."
+  },
+  {
+    "q": "What's the capital of Netherlands?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Netherlands.",
+        "action": "lookup(capital of Netherlands)",
+        "observation": "Amsterdam"
+      }
+    ],
+    "answer": "Amsterdam."
+  },
+  {
+    "q": "What's the capital of Korea?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Korea.",
+        "action": "lookup(capital of Korea)",
+        "observation": "Seoul"
+      }
+    ],
+    "answer": "Seoul."
+  },
+  {
+    "q": "What is the capital of Switzerland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Switzerland.",
+        "action": "lookup(capital of Switzerland)",
+        "observation": "Bern"
+      }
+    ],
+    "answer": "Bern."
+  },
+  {
+    "q": "Who wrote The Brothers Karamazov?",
+    "trace": [
+      {
+        "thought": "I should look up author of The Brothers Karamazov.",
+        "action": "lookup(author of The Brothers Karamazov)",
+        "observation": "Dostoevsky"
+      }
+    ],
+    "answer": "Dostoevsky."
+  },
+  {
+    "q": "What is 21 * 12?",
+    "trace": [
+      {
+        "thought": "I need to compute 21 * 12.",
+        "action": "calc(21 * 12)",
+        "observation": "252"
+      }
+    ],
+    "answer": "252."
+  },
+  {
+    "q": "What is the capital of Ukraine?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Ukraine.",
+        "action": "lookup(capital of Ukraine)",
+        "observation": "Kyiv"
+      }
+    ],
+    "answer": "Kyiv."
+  },
+  {
+    "q": "Who is the author of Faust?",
+    "trace": [
+      {
+        "thought": "I should look up author of Faust.",
+        "action": "lookup(author of Faust)",
+        "observation": "Goethe"
+      }
+    ],
+    "answer": "Goethe."
+  },
+  {
+    "q": "Who wrote Crime and Punishment?",
+    "trace": [
+      {
+        "thought": "I should look up author of Crime and Punishment.",
+        "action": "lookup(author of Crime and Punishment)",
+        "observation": "Dostoevsky"
+      }
+    ],
+    "answer": "Dostoevsky."
+  },
+  {
+    "q": "Who wrote To Kill a Mockingbird?",
+    "trace": [
+      {
+        "thought": "I should look up author of To Kill a Mockingbird.",
+        "action": "lookup(author of To Kill a Mockingbird)",
+        "observation": "Lee"
+      }
+    ],
+    "answer": "Lee."
+  },
+  {
+    "q": "What is the chemical symbol of carbon?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of carbon.",
+        "action": "lookup(chemical symbol of carbon)",
+        "observation": "C"
+      }
+    ],
+    "answer": "C."
+  },
+  {
+    "q": "What is 6 * 23?",
+    "trace": [
+      {
+        "thought": "I need to compute 6 * 23.",
+        "action": "calc(6 * 23)",
+        "observation": "138"
+      }
+    ],
+    "answer": "138."
+  },
+  {
+    "q": "What's 36 + 59?",
+    "trace": [
+      {
+        "thought": "I need to compute 36 + 59.",
+        "action": "calc(36 + 59)",
+        "observation": "95"
+      }
+    ],
+    "answer": "95."
+  },
+  {
+    "q": "What is the capital of USA?",
+    "trace": [
+      {
+        "thought": "I should look up capital of USA.",
+        "action": "lookup(capital of USA)",
+        "observation": "Washington"
+      }
+    ],
+    "answer": "Washington."
+  },
+  {
+    "q": "What's 94 + 59?",
+    "trace": [
+      {
+        "thought": "I need to compute 94 + 59.",
+        "action": "calc(94 + 59)",
+        "observation": "153"
+      }
+    ],
+    "answer": "153."
+  },
+  {
+    "q": "What is 25 divided by 5?",
+    "trace": [
+      {
+        "thought": "I need to compute 25 / 5.",
+        "action": "calc(25 / 5)",
+        "observation": "5"
+      }
+    ],
+    "answer": "5."
+  },
+  {
+    "q": "What is 4 * 25?",
+    "trace": [
+      {
+        "thought": "I need to compute 4 * 25.",
+        "action": "calc(4 * 25)",
+        "observation": "100"
+      }
+    ],
+    "answer": "100."
+  },
+  {
+    "q": "Calculate 14 + 12.",
+    "trace": [
+      {
+        "thought": "I need to compute 14 + 12.",
+        "action": "calc(14 + 12)",
+        "observation": "26"
+      }
+    ],
+    "answer": "26."
+  },
+  {
+    "q": "What is the chemical symbol of hydrogen?",
+    "trace": [
+      {
+        "thought": "I should look up chemical symbol of hydrogen.",
+        "action": "lookup(chemical symbol of hydrogen)",
+        "observation": "H"
+      }
+    ],
+    "answer": "H."
+  },
+  {
+    "q": "What is the capital of Ireland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Ireland.",
+        "action": "lookup(capital of Ireland)",
+        "observation": "Dublin"
+      }
+    ],
+    "answer": "Dublin."
+  },
+  {
+    "q": "What's the capital of Thailand?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Thailand.",
+        "action": "lookup(capital of Thailand)",
+        "observation": "Bangkok"
+      }
+    ],
+    "answer": "Bangkok."
+  },
+  {
+    "q": "What's the capital of Nigeria?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Nigeria.",
+        "action": "lookup(capital of Nigeria)",
+        "observation": "Abuja"
+      }
+    ],
+    "answer": "Abuja."
+  },
+  {
+    "q": "What is the capital of South Korea?",
+    "trace": [
+      {
+        "thought": "I should look up capital of South Korea.",
+        "action": "lookup(capital of South Korea)",
+        "observation": "Seoul"
+      }
+    ],
+    "answer": "Seoul."
+  },
+  {
+    "q": "What's the capital of Russia?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Russia.",
+        "action": "lookup(capital of Russia)",
+        "observation": "Moscow"
+      }
+    ],
+    "answer": "Moscow."
+  },
+  {
+    "q": "What is 16 * 2?",
+    "trace": [
+      {
+        "thought": "I need to compute 16 * 2.",
+        "action": "calc(16 * 2)",
+        "observation": "32"
+      }
+    ],
+    "answer": "32."
+  },
+  {
+    "q": "Calculate 54 + 29.",
+    "trace": [
+      {
+        "thought": "I need to compute 54 + 29.",
+        "action": "calc(54 + 29)",
+        "observation": "83"
+      }
+    ],
+    "answer": "83."
+  },
+  {
+    "q": "What is the days in a leap year?",
+    "trace": [
+      {
+        "thought": "I should look up days in a leap year.",
+        "action": "lookup(days in a leap year)",
+        "observation": "366"
+      }
+    ],
+    "answer": "366."
+  },
+  {
+    "q": "Who painted Sistine Chapel?",
+    "trace": [
+      {
+        "thought": "I should look up painter of Sistine Chapel.",
+        "action": "lookup(painter of Sistine Chapel)",
+        "observation": "Michelangelo"
+      }
+    ],
+    "answer": "Michelangelo."
+  },
+  {
+    "q": "What is 9 times 20?",
+    "trace": [
+      {
+        "thought": "I need to compute 9 * 20.",
+        "action": "calc(9 * 20)",
+        "observation": "180"
+      }
+    ],
+    "answer": "180."
+  },
+  {
+    "q": "Calculate 20 + 28.",
+    "trace": [
+      {
+        "thought": "I need to compute 20 + 28.",
+        "action": "calc(20 + 28)",
+        "observation": "48"
+      }
+    ],
+    "answer": "48."
+  },
+  {
+    "q": "What is 55 plus 5?",
+    "trace": [
+      {
+        "thought": "I need to compute 55 + 5.",
+        "action": "calc(55 + 5)",
+        "observation": "60"
+      }
+    ],
+    "answer": "60."
+  },
+  {
+    "q": "What is (11 + 3) * 9?",
+    "trace": [
+      {
+        "thought": "I need to compute (11 + 3) * 9.",
+        "action": "calc((11 + 3) * 9)",
+        "observation": "126"
+      }
+    ],
+    "answer": "126."
+  },
+  {
+    "q": "What's the capital of Kenya?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Kenya.",
+        "action": "lookup(capital of Kenya)",
+        "observation": "Nairobi"
+      }
+    ],
+    "answer": "Nairobi."
+  },
+  {
+    "q": "Who wrote 1984?",
+    "trace": [
+      {
+        "thought": "I should look up author of 1984.",
+        "action": "lookup(author of 1984)",
+        "observation": "Orwell"
+      }
+    ],
+    "answer": "Orwell."
+  },
+  {
+    "q": "What is 142 minus 57?",
+    "trace": [
+      {
+        "thought": "I need to compute 142 - 57.",
+        "action": "calc(142 - 57)",
+        "observation": "85"
+      }
+    ],
+    "answer": "85."
+  },
+  {
+    "q": "Calculate 47 + 21.",
+    "trace": [
+      {
+        "thought": "I need to compute 47 + 21.",
+        "action": "calc(47 + 21)",
+        "observation": "68"
+      }
+    ],
+    "answer": "68."
+  },
+  {
+    "q": "What's the capital of Israel?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Israel.",
+        "action": "lookup(capital of Israel)",
+        "observation": "Jerusalem"
+      }
+    ],
+    "answer": "Jerusalem."
+  },
+  {
+    "q": "Who is the author of Hamlet?",
+    "trace": [
+      {
+        "thought": "I should look up author of Hamlet.",
+        "action": "lookup(author of Hamlet)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is the capital of France?",
+    "trace": [
+      {
+        "thought": "I should look up capital of France.",
+        "action": "lookup(capital of France)",
+        "observation": "Paris"
+      }
+    ],
+    "answer": "Paris."
+  },
+  {
+    "q": "What is (4 - 14) * 6?",
+    "trace": [
+      {
+        "thought": "I need to compute (4 - 14) * 6.",
+        "action": "calc((4 - 14) * 6)",
+        "observation": "-60"
+      }
+    ],
+    "answer": "-60."
+  },
+  {
+    "q": "What is 22 times 11?",
+    "trace": [
+      {
+        "thought": "I need to compute 22 * 11.",
+        "action": "calc(22 * 11)",
+        "observation": "242"
+      }
+    ],
+    "answer": "242."
+  },
+  {
+    "q": "What's the capital of Ireland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Ireland.",
+        "action": "lookup(capital of Ireland)",
+        "observation": "Dublin"
+      }
+    ],
+    "answer": "Dublin."
+  },
+  {
+    "q": "Who wrote Romeo and Juliet?",
+    "trace": [
+      {
+        "thought": "I should look up author of Romeo and Juliet.",
+        "action": "lookup(author of Romeo and Juliet)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is 18 times 10?",
+    "trace": [
+      {
+        "thought": "I need to compute 18 * 10.",
+        "action": "calc(18 * 10)",
+        "observation": "180"
+      }
+    ],
+    "answer": "180."
+  },
+  {
+    "q": "What is the capital of Thailand?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Thailand.",
+        "action": "lookup(capital of Thailand)",
+        "observation": "Bangkok"
+      }
+    ],
+    "answer": "Bangkok."
+  },
+  {
+    "q": "Who is the author of To Kill a Mockingbird?",
+    "trace": [
+      {
+        "thought": "I should look up author of To Kill a Mockingbird.",
+        "action": "lookup(author of To Kill a Mockingbird)",
+        "observation": "Lee"
+      }
+    ],
+    "answer": "Lee."
+  },
+  {
+    "q": "Who wrote War and Peace?",
+    "trace": [
+      {
+        "thought": "I should look up author of War and Peace.",
+        "action": "lookup(author of War and Peace)",
+        "observation": "Tolstoy"
+      }
+    ],
+    "answer": "Tolstoy."
+  },
+  {
+    "q": "Who wrote King Lear?",
+    "trace": [
+      {
+        "thought": "I should look up author of King Lear.",
+        "action": "lookup(author of King Lear)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What is the capital of Japan?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Japan.",
+        "action": "lookup(capital of Japan)",
+        "observation": "Tokyo"
+      }
+    ],
+    "answer": "Tokyo."
+  },
+  {
+    "q": "What is the capital of Iran?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Iran.",
+        "action": "lookup(capital of Iran)",
+        "observation": "Tehran"
+      }
+    ],
+    "answer": "Tehran."
+  },
+  {
+    "q": "What is 62 minus 56?",
+    "trace": [
+      {
+        "thought": "I need to compute 62 - 56.",
+        "action": "calc(62 - 56)",
+        "observation": "6"
+      }
+    ],
+    "answer": "6."
+  },
+  {
+    "q": "What is 16 plus 49?",
+    "trace": [
+      {
+        "thought": "I need to compute 16 + 49.",
+        "action": "calc(16 + 49)",
+        "observation": "65"
+      }
+    ],
+    "answer": "65."
+  },
+  {
+    "q": "What's the capital of Austria?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Austria.",
+        "action": "lookup(capital of Austria)",
+        "observation": "Vienna"
+      }
+    ],
+    "answer": "Vienna."
+  },
+  {
+    "q": "What's the capital of Germany?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Germany.",
+        "action": "lookup(capital of Germany)",
+        "observation": "Berlin"
+      }
+    ],
+    "answer": "Berlin."
+  },
+  {
+    "q": "What is 199 - 110?",
+    "trace": [
+      {
+        "thought": "I need to compute 199 - 110.",
+        "action": "calc(199 - 110)",
+        "observation": "89"
+      }
+    ],
+    "answer": "89."
+  },
+  {
+    "q": "Who painted Starry Night?",
+    "trace": [
+      {
+        "thought": "I should look up painter of Starry Night.",
+        "action": "lookup(painter of Starry Night)",
+        "observation": "van Gogh"
+      }
+    ],
+    "answer": "van Gogh."
+  },
+  {
+    "q": "What is the boiling point of water in Celsius?",
+    "trace": [
+      {
+        "thought": "I should look up boiling point of water in Celsius.",
+        "action": "lookup(boiling point of water in Celsius)",
+        "observation": "100"
+      }
+    ],
+    "answer": "100."
+  },
+  {
+    "q": "What is the capital of England?",
+    "trace": [
+      {
+        "thought": "I should look up capital of England.",
+        "action": "lookup(capital of England)",
+        "observation": "London"
+      }
+    ],
+    "answer": "London."
+  },
+  {
+    "q": "What's the capital of Sweden?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Sweden.",
+        "action": "lookup(capital of Sweden)",
+        "observation": "Stockholm"
+      }
+    ],
+    "answer": "Stockholm."
+  },
+  {
+    "q": "Who painted The Scream?",
+    "trace": [
+      {
+        "thought": "I should look up painter of The Scream.",
+        "action": "lookup(painter of The Scream)",
+        "observation": "Munch"
+      }
+    ],
+    "answer": "Munch."
+  },
+  {
+    "q": "What is 23 times 15?",
+    "trace": [
+      {
+        "thought": "I need to compute 23 * 15.",
+        "action": "calc(23 * 15)",
+        "observation": "345"
+      }
+    ],
+    "answer": "345."
+  },
+  {
+    "q": "What is 14 * 14?",
+    "trace": [
+      {
+        "thought": "I need to compute 14 * 14.",
+        "action": "calc(14 * 14)",
+        "observation": "196"
+      }
+    ],
+    "answer": "196."
+  },
+  {
+    "q": "What is 133 minus 15?",
+    "trace": [
+      {
+        "thought": "I need to compute 133 - 15.",
+        "action": "calc(133 - 15)",
+        "observation": "118"
+      }
+    ],
+    "answer": "118."
+  },
+  {
+    "q": "Who is the author of Emma?",
+    "trace": [
+      {
+        "thought": "I should look up author of Emma.",
+        "action": "lookup(author of Emma)",
+        "observation": "Austen"
+      }
+    ],
+    "answer": "Austen."
+  },
+  {
+    "q": "What's the capital of Belgium?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Belgium.",
+        "action": "lookup(capital of Belgium)",
+        "observation": "Brussels"
+      }
+    ],
+    "answer": "Brussels."
+  },
+  {
+    "q": "What is 4 times 19?",
+    "trace": [
+      {
+        "thought": "I need to compute 4 * 19.",
+        "action": "calc(4 * 19)",
+        "observation": "76"
+      }
+    ],
+    "answer": "76."
+  },
+  {
+    "q": "What is 23 * 19?",
+    "trace": [
+      {
+        "thought": "I need to compute 23 * 19.",
+        "action": "calc(23 * 19)",
+        "observation": "437"
+      }
+    ],
+    "answer": "437."
+  },
+  {
+    "q": "What's the capital of Iraq?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Iraq.",
+        "action": "lookup(capital of Iraq)",
+        "observation": "Baghdad"
+      }
+    ],
+    "answer": "Baghdad."
+  },
+  {
+    "q": "Who wrote Animal Farm?",
+    "trace": [
+      {
+        "thought": "I should look up author of Animal Farm.",
+        "action": "lookup(author of Animal Farm)",
+        "observation": "Orwell"
+      }
+    ],
+    "answer": "Orwell."
+  },
+  {
+    "q": "What's the capital of Egypt?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Egypt.",
+        "action": "lookup(capital of Egypt)",
+        "observation": "Cairo"
+      }
+    ],
+    "answer": "Cairo."
+  },
+  {
+    "q": "What is the capital of Korea?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Korea.",
+        "action": "lookup(capital of Korea)",
+        "observation": "Seoul"
+      }
+    ],
+    "answer": "Seoul."
+  },
+  {
+    "q": "Who wrote The Tempest?",
+    "trace": [
+      {
+        "thought": "I should look up author of The Tempest.",
+        "action": "lookup(author of The Tempest)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "What's the capital of Poland?",
+    "trace": [
+      {
+        "thought": "I should look up capital of Poland.",
+        "action": "lookup(capital of Poland)",
+        "observation": "Warsaw"
+      }
+    ],
+    "answer": "Warsaw."
+  },
+  {
+    "q": "Who wrote Sense and Sensibility?",
+    "trace": [
+      {
+        "thought": "I should look up author of Sense and Sensibility.",
+        "action": "lookup(author of Sense and Sensibility)",
+        "observation": "Austen"
+      }
+    ],
+    "answer": "Austen."
+  },
+  {
+    "q": "Who painted The Last Supper?",
+    "trace": [
+      {
+        "thought": "I should look up painter of The Last Supper.",
+        "action": "lookup(painter of The Last Supper)",
+        "observation": "Leonardo da Vinci"
+      }
+    ],
+    "answer": "Leonardo da Vinci."
+  },
+  {
+    "q": "What's the capital of New Zealand?",
+    "trace": [
+      {
+        "thought": "I should look up capital of New Zealand.",
+        "action": "lookup(capital of New Zealand)",
+        "observation": "Wellington"
+      }
+    ],
+    "answer": "Wellington."
+  },
+  {
+    "q": "Who wrote Hamlet?",
+    "trace": [
+      {
+        "thought": "I should look up author of Hamlet.",
+        "action": "lookup(author of Hamlet)",
+        "observation": "Shakespeare"
+      }
+    ],
+    "answer": "Shakespeare."
+  },
+  {
+    "q": "Who is the author of Anna Karenina?",
+    "trace": [
+      {
+        "thought": "I should look up author of Anna Karenina.",
+        "action": "lookup(author of Anna Karenina)",
+        "observation": "Tolstoy"
+      }
+    ],
+    "answer": "Tolstoy."
+  }
+]

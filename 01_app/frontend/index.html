@@ -9,6 +9,9 @@
     #log { border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-height: 240px; white-space: pre-wrap; background: #fafafa; }
     .done { color: #0a7; font-family: ui-monospace, monospace; margin: 4px 0; }
     .err  { color: #c33; }
+    .thought    { color: #555; font-style: italic; margin: 4px 0; font-family: ui-monospace, monospace; }
+    .action     { color: #0a7; margin: 4px 0; font-family: ui-monospace, monospace; }
+    .observation { color: #888; margin: 4px 0 8px 16px; font-family: ui-monospace, monospace; }
     form { display: flex; gap: 8px; margin-top: 16px; }
     input[type=text] { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
     button { padding: 8px 16px; border: 0; border-radius: 6px; background: #222; color: #fff; font: inherit; cursor: pointer; }
@@ -65,6 +68,21 @@ document.getElementById('f').addEventListener('submit', async (e) => {
 function render(ev) {
   if (ev.type === 'token') {
     log.append(ev.v);
+  } else if (ev.type === 'thought') {
+    const el = document.createElement('div');
+    el.className = 'thought';
+    el.textContent = `💭 ${ev.v}`;
+    log.appendChild(el);
+  } else if (ev.type === 'action') {
+    const el = document.createElement('div');
+    el.className = 'action';
+    el.textContent = `🔧 ${ev.v}`;
+    log.appendChild(el);
+  } else if (ev.type === 'observation') {
+    const el = document.createElement('div');
+    el.className = 'observation';
+    el.textContent = `   ↳ ${ev.v}`;
+    log.appendChild(el);
   } else if (ev.type === 'done') {
     const el = document.createElement('div');
     el.className = 'done';
