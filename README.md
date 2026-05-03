@@ -186,11 +186,17 @@ cd 04_transformer && python bpe.py                     # 验证手写 BPE
 cd 05_gpu    && python benchmark.py                    # 需要 NVIDIA GPU
 ```
 
-## 配套博客
+## 配套写作
 
-如果你不想读源码，先想看为什么这么设计、每一段代码背后的"为什么"——有一个 10 篇的配套系列：
+| 形式 | 链接 | 长度 / 风格 |
+|---|---|---|
+| 🌐 **Web 落地页** | [`web/index.html`](./web/index.html) | 单页 HTML，自包含，可部署到 GitHub Pages |
+| 📊 **正式实验报告** | [`reports/EXPERIMENT_REPORT.md`](./reports/EXPERIMENT_REPORT.md) | ~6500 字，方法/结果/讨论/可复现 |
+| 📚 **单篇浓缩 Blog** | [`blog/article.md`](./blog/article.md) | ~5500 字，故事化叙述 |
+| 📖 **11 篇分章 Blog** | [`blog/`](./blog) | ~30K 字，每层一篇 |
+| 🧪 **冷启动实测日志** | [`reports/`](./reports) | 三次独立 cold-start 的原始 stdout |
 
-📖 **[blog/](./blog) · 从一行 query 到 GPU 上的一次浮点乘法**
+📖 **分章 blog 索引（11 篇）**：
 
 | # | 文章 | 主题 |
 |---|---|---|

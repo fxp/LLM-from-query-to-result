@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>LLM from Query to Result · 一个完全 from-scratch 的 LLM 全栈系统</title>
+<meta name="description" content="8 层、~10K 行代码、零外部 LLM API。从浏览器到 GPU 矩阵乘的每一行都看得见——预训练、SFT、Agent SFT、推理服务、KV cache、BPE、CUDA + Triton。RTX 5090 上 70 秒训出能调工具的小 agent。" />
+
+<style>
+:root {
+  --bg: #fafafa;
+  --bg-card: #fff;
+  --fg: #1a1a1a;
+  --fg-soft: #555;
+  --fg-faint: #888;
+  --accent: #0a7;
+  --accent-light: #e6f7f0;
+  --line: #e8e8e8;
+  --code-bg: #f4f4f4;
+  --code-fg: #000;
+  --hl-bg: #fff8d6;
+  --max: 900px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d0d;
+    --bg-card: #181818;
+    --fg: #ededed;
+    --fg-soft: #b0b0b0;
+    --fg-faint: #777;
+    --accent: #2dd99c;
+    --accent-light: #0d2820;
+    --line: #2a2a2a;
+    --code-bg: #1d1d1d;
+    --code-fg: #f0f0f0;
+    --hl-bg: #3a3408;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+main { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent); }
+a:hover { border-bottom-style: solid; }
+
+h1, h2, h3 { line-height: 1.25; font-weight: 700; }
+h1 { font-size: 42px; margin: 0 0 16px; letter-spacing: -0.02em; }
+h2 { font-size: 28px; margin: 64px 0 16px; letter-spacing: -0.01em; }
+h3 { font-size: 19px; margin: 32px 0 12px; }
+
+code, pre, .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace; }
+code { background: var(--code-bg); color: var(--code-fg); padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+pre { background: var(--code-bg); color: var(--code-fg); padding: 16px 20px; border-radius: 8px; overflow-x: auto; font-size: 13px; line-height: 1.55; }
+pre code { background: transparent; padding: 0; }
+
+/* ----- HERO ----- */
+header {
+  padding: 80px 24px 60px;
+  background: linear-gradient(180deg, var(--accent-light) 0%, var(--bg) 100%);
+  border-bottom: 1px solid var(--line);
+}
+header .inner { max-width: var(--max); margin: 0 auto; }
+header .eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 24px;
+}
+header h1 { font-size: 52px; margin-bottom: 24px; }
+header p.lead {
+  font-size: 22px;
+  line-height: 1.5;
+  color: var(--fg-soft);
+  max-width: 720px;
+  margin: 0 0 32px;
+}
+header .cta {
+  display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px;
+}
+.btn {
+  display: inline-block; padding: 12px 22px; border-radius: 8px;
+  font-weight: 600; font-size: 15px;
+  border: 1px solid var(--accent); border-bottom-style: solid;
+}
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover { filter: brightness(0.95); }
+.btn-secondary { background: transparent; color: var(--accent); }
+.btn-secondary:hover { background: var(--accent-light); }
+
+/* ----- SECTIONS ----- */
+section { padding: 24px 0; }
+
+.lede { font-size: 18px; color: var(--fg-soft); margin: 16px 0 32px; }
+
+/* terminal-style demo box */
+.demo {
+  background: #1a1a1a; color: #f0f0f0; border-radius: 10px;
+  padding: 20px 24px; margin: 24px 0;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px; line-height: 1.7;
+  overflow-x: auto;
+}
+.demo .you { color: #88c0ff; }
+.demo .think { color: #c0c0c0; font-style: italic; }
+.demo .act { color: #2dd99c; }
+.demo .obs { color: #ffd870; padding-left: 1.5em; }
+.demo .ans { color: #fff; font-weight: 700; }
+.demo .comment { color: #707070; font-style: italic; font-size: 0.9em; }
+
+/* architecture grid */
+.layers {
+  display: grid; grid-template-columns: 1fr; gap: 12px;
+  margin-top: 24px;
+}
+.layer {
+  background: var(--bg-card); border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: grid; grid-template-columns: 80px 1fr auto; gap: 16px; align-items: center;
+}
+.layer .id {
+  font-family: "JetBrains Mono", monospace;
+  font-weight: 700; font-size: 18px; color: var(--accent);
+}
+.layer .title { font-weight: 600; margin-bottom: 4px; }
+.layer .desc { color: var(--fg-soft); font-size: 14px; line-height: 1.5; }
+.layer .timing {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px; color: var(--fg-faint); white-space: nowrap;
+}
+
+/* metric cards */
+.metrics {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;
+  margin: 24px 0;
+}
+.metric {
+  background: var(--bg-card); border: 1px solid var(--line); border-radius: 8px;
+  padding: 16px 20px;
+}
+.metric .num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 28px; font-weight: 700; color: var(--accent); line-height: 1.2;
+}
+.metric .label { color: var(--fg-soft); font-size: 13px; margin-top: 4px; }
+
+table {
+  width: 100%; border-collapse: collapse; margin: 16px 0;
+  font-size: 14px;
+}
+th, td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px; text-align: left;
+}
+th { color: var(--fg-soft); font-weight: 600; font-size: 13px; }
+td.mono { font-family: "JetBrains Mono", monospace; font-size: 13px; }
+td .ok { color: var(--accent); }
+td .miss { color: #aaa; }
+td .fail { color: #c33; }
+
+/* highlight callout */
+.callout {
+  background: var(--accent-light); border-left: 4px solid var(--accent);
+  padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 24px 0;
+  color: var(--fg);
+}
+.callout strong { color: var(--accent); }
+
+/* footer */
+footer {
+  margin-top: 80px; padding: 40px 24px; border-top: 1px solid var(--line);
+  color: var(--fg-faint); font-size: 14px; text-align: center;
+}
+footer a { color: var(--fg-soft); border-bottom-color: var(--line); }
+footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+@media (max-width: 640px) {
+  header h1 { font-size: 36px; }
+  header p.lead { font-size: 18px; }
+  h2 { font-size: 24px; }
+  .layer { grid-template-columns: 60px 1fr; }
+  .layer .timing { grid-column: 1 / -1; padding-left: 76px; padding-top: 0; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <span class="eyebrow">A from-scratch LLM stack</span>
+    <h1>LLM from query<br/>to GPU multiply.</h1>
+    <p class="lead">
+      8 层、~10K 行代码、<strong>零外部 LLM API</strong>、零外部 model 权重——预训练、SFT、Agent SFT、推理服务、KV cache、手写 BPE、CUDA + Triton。
+      RTX 5090 上 <strong>70 秒训出</strong>能调工具的小 agent。
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/fxp/LLM-from-query-to-result" target="_blank" rel="noopener">在 GitHub 查看</a>
+      <a class="btn btn-secondary" href="../blog/article.md">阅读全文</a>
+      <a class="btn btn-secondary" href="../reports/EXPERIMENT_REPORT.md">实验报告</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+<h2>这个 demo</h2>
+<p class="lede">
+浏览器输入 <code>What is 1234 plus 5678?</code>，按下 Enter——下面是真实流式输出（<strong>1234+5678 不在 SFT 训练数据里</strong>，但 model 学会了通过 <code>calc</code> 工具扩展能力）：
+</p>
+<div class="demo">
+<span class="you">👤 What is 1234 plus 5678?</span>
+
+<span class="think">💭 I need to compute 1234 + 5678.</span>
+<span class="act">🔧 calc(1234 + 5678)</span>
+<span class="obs">↳ 6912</span>  <span class="comment">// Python eval, not model</span>
+<span class="ans">🤖 6912.</span>
+</div>
+<p class="lede">
+  124M 模型自己绝对算不对 4 位数加法（chat-SFT 版本会答 "13"）。带 <code>calc</code> 工具就行。这就是 agent 的本质——<strong>model 能力 = 知识 + 工具扩展</strong>。
+</p>
+</section>
+
+<section>
+<h2>八层架构</h2>
+<p class="lede">
+  每一层 &lt; 300 行核心代码，独立可跑。整个栈在 RTX 5090 上从零跑通用 ~70 秒。
+</p>
+
+<div class="layers">
+
+<div class="layer">
+  <div class="id">L0</div>
+  <div>
+    <div class="title">预训练 · <code>00_train/</code></div>
+    <div class="desc">从随机权重训出 7M GPT。在 1.1MB 莎士比亚语料上 1000 步训练，loss 从 10.815 (= ln(50257)) 降到 4.55</div>
+  </div>
+  <div class="timing">12 sec</div>
+</div>
+
+<div class="layer">
+  <div class="id">L0.5</div>
+  <div>
+    <div class="title">SFT 微调 · <code>00b_sft/</code></div>
+    <div class="desc">242 条手写 Q/A 教 base model 答问。Path A 用我们自训 7M base，Path B 用 OpenAI gpt2-124M（解锁世界知识）</div>
+  </div>
+  <div class="timing">28 sec</div>
+</div>
+
+<div class="layer">
+  <div class="id">L0.6</div>
+  <div>
+    <div class="title">Agent SFT · <code>00c_agent_sft/</code></div>
+    <div class="desc">258 条 ReAct traces 教 model 调用 calc/lookup 工具。Loss masking 让 OBSERVATION prefix 学但内容不学</div>
+  </div>
+  <div class="timing">33 sec</div>
+</div>
+
+<div class="layer">
+  <div class="id">L1</div>
+  <div>
+    <div class="title">Web App · <code>01_app/</code></div>
+    <div class="desc">FastAPI + SSE 流式输出 + ~80 行原生 HTML/JS 前端。浏览器一个 token 一个 token 收到 thought / action / observation</div>
+  </div>
+  <div class="timing">~130 lines</div>
+</div>
+
+<div class="layer">
+  <div class="id">L2</div>
+  <div>
+    <div class="title">Chat 客户端 + Agent Loop · <code>02_agent/</code></div>
+    <div class="desc">默认是 chat completion 客户端。AGENT_MODE=1 启用 ReAct loop：generate-stop-parse-execute-inject 循环</div>
+  </div>
+  <div class="timing">~200 lines</div>
+</div>
+
+<div class="layer">
+  <div class="id">L3</div>
+  <div>
+    <div class="title">推理服务 · <code>03_model/</code></div>
+    <div class="desc">FastAPI + 自实现 KV cache。Prefill 1.8 ms / decode 2.6 ms (124M, 5090, batch=1)。零 transformers runtime</div>
+  </div>
+  <div class="timing">~140 lines</div>
+</div>
+
+<div class="layer">
+  <div class="id">L4</div>
+  <div>
+    <div class="title">Transformer + BPE · <code>04_transformer/</code></div>
+    <div class="desc">330 行手写 GPT-2（embed/MHA/FFN/LN/KV cache）+ 230 行手写 BPE（与 tiktoken bit-for-bit 等价，7/7 测试集 100% 通过）</div>
+  </div>
+  <div class="timing">~560 lines</div>
+</div>
+
+<div class="layer">
+  <div class="id">L5</div>
+  <div>
+    <div class="title">GPU Kernels · <code>05_gpu/</code></div>
+    <div class="desc">手写 CUDA naive matmul / tiled matmul（演示分块），Triton fused flash-attention（vs PyTorch unfused 8.4× 加速）</div>
+  </div>
+  <div class="timing">~165 lines</div>
+</div>
+
+</div>
+</section>
+
+<section>
+<h2>关键数字（实测）</h2>
+<p class="lede">
+  RTX 5090, 三次独立 cold-start 验证。完整原始日志见 <a href="../reports/cold-start-2026-05-03-server3.raw.log" target="_blank">reports/</a>。
+</p>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="num">70 sec</div>
+    <div class="label">L0 + L0.5 + L0.6 训练总耗时（不含 124M 权重下载）</div>
+  </div>
+  <div class="metric">
+    <div class="num">10.815</div>
+    <div class="label">L0 step 0 loss = ln(50257) 理论值，验证权重初始化</div>
+  </div>
+  <div class="metric">
+    <div class="num">7/7 ✓</div>
+    <div class="label">手写 BPE bit-for-bit 等价 tiktoken（含中文/日文/emoji）</div>
+  </div>
+  <div class="metric">
+    <div class="num">&lt; 1e-6</div>
+    <div class="label">手写 KV cache vs full forward 数值差（浮点精度）</div>
+  </div>
+  <div class="metric">
+    <div class="num">8.4×</div>
+    <div class="label">Triton flash-attention vs PyTorch unfused 加速比</div>
+  </div>
+  <div class="metric">
+    <div class="num">8 / 10</div>
+    <div class="label">Agent E2E 测试答对率（greedy decoding，1234+5678→6912 ✓）</div>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>最重要的 demo：1234 + 5678 → 6912</h2>
+<div class="callout">
+  <strong>这条记录是整个项目最重要的实测之一。</strong>
+  Model 在 SFT 训练里只见过 1-99 范围内的加法。但它在推理时正确生成 <code>calc(1234 + 5678)</code>，把任意数字传给真 Python 工具。<br/><br/>
+  <strong>这印证了 agent 的本质论点</strong>：模型学的是<strong>工具调用的格式契约</strong>（"看到算术问题就调 calc"），不是工具的能力本身（计算）。这跟 ChatGPT 接 web_search、Cursor 接 grep+edit、Claude 接 computer use 是同一个本质。
+</div>
+
+<table>
+<thead><tr><th>Query</th><th>类别</th><th>输出</th><th></th></tr></thead>
+<tbody>
+<tr><td>capital of France?</td><td>KB lookup, in-data</td><td class="mono">Paris.</td><td><span class="ok">✓</span></td></tr>
+<tr><td>23 plus 47?</td><td>calc, in-data</td><td class="mono">70.</td><td><span class="ok">✓</span></td></tr>
+<tr><td><strong>1234 plus 5678?</strong></td><td><strong>calc, OOD</strong></td><td class="mono"><strong>6912.</strong></td><td><span class="ok">✓ 关键泛化</span></td></tr>
+<tr><td>Who wrote Hamlet?</td><td>KB lookup, in-data</td><td class="mono">Shakespeare.</td><td><span class="ok">✓</span></td></tr>
+<tr><td>chemical symbol of gold?</td><td>KB lookup, in-data</td><td class="mono">Au.</td><td><span class="ok">✓</span></td></tr>
+<tr><td>capital of Mongolia?</td><td>KB miss</td><td class="mono">not found.</td><td><span class="miss">✓ 诚实</span></td></tr>
+<tr><td>How are you today?</td><td>OOD conversational</td><td class="mono">hallucinate lookup</td><td><span class="fail">✗ 已知失败</span></td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>从零启动</h2>
+<p class="lede">完整 cold-start 命令（CN 区，已测三次）：</p>
+<pre><code># 1. Clone (CN 区直连 github 不通，走 gh-proxy)
+git clone https://gh-proxy.com/https://github.com/fxp/LLM-from-query-to-result.git
+cd LLM-from-query-to-result
+
+# 2. 配 pip mirror + 安装
+mkdir -p ~/.pip
+echo -e "[global]\nindex-url = https://mirrors.aliyun.com/pypi/simple/\ntrusted-host = mirrors.aliyun.com" > ~/.pip/pip.conf
+pip install -r requirements.txt
+
+# 3. 训 base + SFT + agent SFT (~70 秒在 5090)
+cd 00_train     && python prepare.py && python train.py
+cd ../00b_sft   && python train.py && python train_from_gpt2.py    # 后者首次会下 124M 权重 (HF mirror 自动 fallback)
+cd ../00c_agent_sft && python build_data.py && python train.py
+
+# 4. 起服务（agent.pt 是带工具的 124M 模型）
+MODEL_PATH=$(pwd)/out/agent.pt python ../03_model/server.py &
+AGENT_MODE=1 uvicorn 01_app.backend.main:app --port 8000 &
+
+# 5. 浏览器打开 http://localhost:8000
+#    输入 "What is 1234 plus 5678?" → 一个个 token 蹦出 "6912."</code></pre>
+</section>
+
+<section>
+<h2>深度阅读</h2>
+
+<table>
+<thead><tr><th></th><th>文章</th><th>主题</th></tr></thead>
+<tbody>
+<tr><td>📚</td><td><a href="../blog/article.md">单篇浓缩版</a></td><td>整个项目的故事，4000 字</td></tr>
+<tr><td>📊</td><td><a href="../reports/EXPERIMENT_REPORT.md">实验报告</a></td><td>正式格式：方法、结果、讨论、可复现性</td></tr>
+<tr><td>📖</td><td><a href="../blog/README.md">11 篇分章 blog</a></td><td>每层一篇，~30K 字总量</td></tr>
+<tr><td>🧪</td><td><a href="../reports/">原始实验日志</a></td><td>三次独立 cold-start 的完整 stdout</td></tr>
+<tr><td>💻</td><td><a href="https://github.com/fxp/LLM-from-query-to-result" target="_blank">完整源码</a></td><td>~10K 行 Python + ~165 行 CUDA</td></tr>
+</tbody>
+</table>
+</section>
+
+<section>
+<h2>差异化贡献</h2>
+<p class="lede">业界已有许多优秀"从零写 GPT"教程（karpathy/nanoGPT、minbpe 等）。本项目的差异化：</p>
+<table>
+<thead><tr><th>主题</th><th>大多数教程</th><th>本项目</th></tr></thead>
+<tbody>
+<tr><td>GPT 架构</td><td>✓</td><td>✓</td></tr>
+<tr><td>预训练循环</td><td>✓</td><td>✓</td></tr>
+<tr><td>BPE tokenizer</td><td>一些（minbpe）</td><td>✓ 与 tiktoken 验证 bit-for-bit 等价</td></tr>
+<tr><td><strong>SFT instruction tuning</strong></td><td>很少</td><td><strong>✓</strong></td></tr>
+<tr><td><strong>Agent SFT + ReAct loop</strong></td><td>几乎没有</td><td><strong>✓</strong></td></tr>
+<tr><td><strong>推理服务（KV cache + SSE）</strong></td><td>很少</td><td><strong>✓</strong></td></tr>
+<tr><td><strong>Web 前端</strong></td><td>几乎没有</td><td><strong>✓</strong></td></tr>
+<tr><td><strong>GPU kernel 内幕</strong></td><td>一些</td><td><strong>✓ Triton + CUDA 对比</strong></td></tr>
+<tr><td><strong>从浏览器到 matmul 的端到端 trace</strong></td><td>几乎没有</td><td><strong>✓</strong></td></tr>
+</tbody>
+</table>
+</section>
+
+</main>
+
+<footer>
+  <p>
+    源码 · <a href="https://github.com/fxp/LLM-from-query-to-result" target="_blank">github.com/fxp/LLM-from-query-to-result</a> ·
+    MIT License · 2026
+  </p>
+  <p>
+    由 fxp 设计 · Claude Opus 4.7 实施 · RTX 5090 实测
+  </p>
+</footer>
+
+</body>
+</html>
