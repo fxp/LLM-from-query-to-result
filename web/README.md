@@ -7,6 +7,29 @@
 
 两个文件都是单文件 inline CSS、自动 light/dark mode、移动端适配，不需要任何 build 步骤。
 
+## 部署管线（GitHub Pages + Actions）
+
+`.github/workflows/docs.yml` 把这两个 polished 页面和 mkdocs 站合并到一个 GitHub Pages：
+
+| 路径 | 来源 |
+|---|---|
+| `/` | `web/index.html`（落地页） |
+| `/report.html` | `web/report.html`（实验报告） |
+| `/00-train/`, `/00b-sft/`, ..., `/05-gpu/`, `/trace/` | `docs/*.md`（mkdocs Material） |
+| `/blog/`, `/blog/00-overview/`, ..., `/blog/10-L0.6-agent/`, `/blog/article/` | `blog/*.md`（mkdocs build 时 stage 进 `docs/blog/`） |
+
+触发条件：`main` 分支上 `web/`、`blog/`、`docs/`、`mkdocs.yml`、`reports/EXPERIMENT_REPORT.md`、workflow 自身任一变化都会重建并推送到 `gh-pages` 分支。
+
+要本地预览整套站点：
+
+```bash
+# stage blog 进 docs/（workflow 在 CI 上自动做这一步）
+mkdir -p docs/blog && cp -r blog/* docs/blog/ && mv docs/blog/README.md docs/blog/index.md
+mkdocs serve
+# 另起一个 server 来看 web/*.html
+python -m http.server -d web 8001
+```
+
 `index.html` 是一个独立的、自包含的 HTML 落地页，用来给项目做"门面"。
 
 - 单文件，没有外部 JS/CSS 依赖

@@ -672,7 +672,7 @@ print('max diff:', (full[0, -1] - dec[0, -1]).abs().max().item())
 <p>预期输出：<code>max diff: 2.4e-07</code>（&lt; 1e-6 即通过）。</p>
 
 <h3>7.3 报告中的所有数字均可复现</h3>
-<p>每个 TFLOPS、loss、user-visible latency 都有对应的源代码 + 实测命令。完整原始 stdout 见 <a href="../reports/cold-start-2026-05-03-server3.raw.log"><code>reports/cold-start-2026-05-03-server3.raw.log</code></a>（426 行）。</p>
+<p>每个 TFLOPS、loss、user-visible latency 都有对应的源代码 + 实测命令。完整原始 stdout 见 <a href="https://github.com/fxp/LLM-from-query-to-result/blob/main/reports/cold-start-2026-05-03-server3.raw.log" target="_blank" rel="noopener"><code>reports/cold-start-2026-05-03-server3.raw.log</code></a>（426 行）。</p>
 
 <h2 id="sec-8">8. 结论</h2>
 <p>我们论证了一个 reasonable size 的 LLM 全栈系统——<strong>~10K 行代码、零外部 LLM 依赖、可在 5090 上 70 秒训练 + 1 秒推理</strong>——是可教学且可独立运行的。每一行代码、每一个数字都在 GitHub 仓库中。</p>
@@ -721,8 +721,8 @@ print('max diff:', (full[0, -1] - dec[0, -1]).abs().max().item())
   <p>
     源码 · <a href="https://github.com/fxp/LLM-from-query-to-result" target="_blank" rel="noopener">github.com/fxp/LLM-from-query-to-result</a> ·
     <a href="index.html">项目主页</a> ·
-    <a href="../blog/article.md">单篇 blog</a> ·
-    <a href="../blog/README.md">11 篇分章 blog</a>
+    <a href="blog/article/">单篇 blog</a> ·
+    <a href="blog/">11 篇分章 blog</a>
   </p>
   <p>MIT License · 2026 · 由 fxp 设计 · Claude Opus 4.7 实施 · RTX 5090 实测</p>
 </footer>

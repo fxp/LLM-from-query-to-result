@@ -208,7 +208,7 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
     </p>
     <div class="cta">
       <a class="btn btn-primary" href="https://github.com/fxp/LLM-from-query-to-result" target="_blank" rel="noopener">在 GitHub 查看</a>
-      <a class="btn btn-secondary" href="../blog/article.md">阅读全文</a>
+      <a class="btn btn-secondary" href="blog/article/">阅读全文</a>
       <a class="btn btn-secondary" href="report.html">实验报告</a>
     </div>
   </div>
@@ -320,7 +320,7 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 <section>
 <h2>关键数字（实测）</h2>
 <p class="lede">
-  RTX 5090, 三次独立 cold-start 验证。完整原始日志见 <a href="../reports/cold-start-2026-05-03-server3.raw.log" target="_blank">reports/</a>。
+  RTX 5090, 三次独立 cold-start 验证。完整原始日志见 <a href="https://github.com/fxp/LLM-from-query-to-result/blob/main/reports/cold-start-2026-05-03-server3.raw.log" target="_blank" rel="noopener">reports/</a>。
 </p>
 
 <div class="metrics">
@@ -404,10 +404,10 @@ AGENT_MODE=1 uvicorn 01_app.backend.main:app --port 8000 &
 <table>
 <thead><tr><th></th><th>文章</th><th>主题</th></tr></thead>
 <tbody>
-<tr><td>📚</td><td><a href="../blog/article.md">单篇浓缩版</a></td><td>整个项目的故事，4000 字</td></tr>
-<tr><td>📊</td><td><a href="report.html">实验报告（HTML）</a> · <a href="../reports/EXPERIMENT_REPORT.md">Markdown</a></td><td>正式格式：方法、结果、讨论、可复现性</td></tr>
-<tr><td>📖</td><td><a href="../blog/README.md">11 篇分章 blog</a></td><td>每层一篇，~30K 字总量</td></tr>
-<tr><td>🧪</td><td><a href="../reports/">原始实验日志</a></td><td>三次独立 cold-start 的完整 stdout</td></tr>
+<tr><td>📚</td><td><a href="blog/article/">单篇浓缩版</a></td><td>整个项目的故事，4000 字</td></tr>
+<tr><td>📊</td><td><a href="report.html">实验报告（HTML）</a> · <a href="https://github.com/fxp/LLM-from-query-to-result/blob/main/reports/EXPERIMENT_REPORT.md" target="_blank" rel="noopener">Markdown</a></td><td>正式格式：方法、结果、讨论、可复现性</td></tr>
+<tr><td>📖</td><td><a href="blog/">11 篇分章 blog</a></td><td>每层一篇，~30K 字总量</td></tr>
+<tr><td>🧪</td><td><a href="https://github.com/fxp/LLM-from-query-to-result/tree/main/reports" target="_blank" rel="noopener">原始实验日志</a></td><td>三次独立 cold-start 的完整 stdout</td></tr>
 <tr><td>💻</td><td><a href="https://github.com/fxp/LLM-from-query-to-result" target="_blank">完整源码</a></td><td>~10K 行 Python + ~165 行 CUDA</td></tr>
 </tbody>
 </table>

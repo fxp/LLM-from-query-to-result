@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main
-      - claude/chatgpt-agent-demo-1mKiT
     paths:
       - docs/**
+      - blog/**
+      - web/**
+      - reports/EXPERIMENT_REPORT.md
       - mkdocs.yml
       - .github/workflows/docs.yml
   workflow_dispatch:
@@ -23,13 +25,41 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install MkDocs Material
         run: pip install mkdocs-material
-      - name: Build site
+
+      - name: Stage blog/ into docs/blog/
+        # mkdocs only builds files inside docs_dir, so copy blog posts in
+        # before building. README.md is renamed to index.md so the directory
+        # has an index page (URL: /blog/), and any (README.md) cross-links
+        # are rewritten to (index.md) so mkdocs --strict resolves them.
+        run: |
+          mkdir -p docs/blog
+          cp -r blog/* docs/blog/
+          if [ -f docs/blog/README.md ]; then
+            mv docs/blog/README.md docs/blog/index.md
+          fi
+          # rewrite intra-blog links to README.md → index.md
+          find docs/blog -name '*.md' -print0 | xargs -0 sed -i 's/(README\.md)/(index.md)/g'
+
+      - name: Build mkdocs site
         run: mkdocs build --strict
+
+      - name: Overlay polished landing + report pages
+        # The two self-contained HTML pages in web/ become the front door:
+        #   /            ->  web/index.html (overwrites mkdocs default index)
+        #   /report.html ->  web/report.html (formal experiment report)
+        # All mkdocs content stays accessible at /00-train/, /blog/00-overview/, etc.
+        run: |
+          cp web/index.html site/index.html
+          cp web/report.html site/report.html
+          touch site/.nojekyll
+
       - name: Push to gh-pages branch
         uses: peaceiris/actions-gh-pages@v4
         with:
