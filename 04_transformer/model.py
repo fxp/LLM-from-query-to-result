@@ -300,4 +300,11 @@ def _probe_and_set_hf_endpoint() -> None:
         urllib.request.urlopen(req, timeout=3).close()
     except (urllib.error.URLError, socket.timeout, OSError):
         os.environ["HF_ENDPOINT"] = HF_MIRROR
+        # Mirrors typically don't host the Xet/CAS CDN, and even when they
+        # redirect to it the connection is much slower in restricted regions.
+        # Force the legacy LFS download path which is what the mirror serves
+        # well. Also bump the per-request timeout (default is short).
+        os.environ.setdefault("HF_HUB_DISABLE_XET", "1")
+        os.environ.setdefault("HF_HUB_DOWNLOAD_TIMEOUT", "60")
         print(f"  HF Hub direct unreachable; using mirror: {HF_MIRROR}")
+        print(f"  (set HF_HUB_DISABLE_XET=1, HF_HUB_DOWNLOAD_TIMEOUT=60)")
