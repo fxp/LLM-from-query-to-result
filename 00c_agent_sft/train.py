@@ -59,7 +59,14 @@ def build_example(ex: dict) -> tuple[list[int], list[int]]:
     for step in ex["trace"]:
         parts.append((f"THOUGHT: {step['thought']}\n", True))   # model emits
         parts.append((f"ACTION: {step['action']}\n", True))     # model emits
-        parts.append((f"OBSERVATION: {step['observation']}\n", False))  # from tool
+        # Learn the "OBSERVATION:" prefix — that's the model's "stop here,
+        # I want a tool result" signal. The agent loop catches this token,
+        # parses the previous ACTION, calls the tool, injects real observation.
+        # Without learning this prefix, the model just keeps emitting ACTIONs.
+        parts.append(("OBSERVATION:", True))
+        # The actual observation content comes from the tool, not the model —
+        # mask it so the model doesn't learn to hallucinate tool outputs.
+        parts.append((f" {step['observation']}\n", False))
     parts.append((f"ANSWER: {ex['answer']}", True))    # model emits
     # Plus EOT — model learns to stop
     seq: list[int] = []

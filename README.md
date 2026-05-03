@@ -46,7 +46,7 @@ SFT 后用户 query:  "What is the capital of France?"
 
 **整条链路里，PyTorch 是唯一非自家的依赖**（tensor 库 + autograd 是底座，不重写）。每个 token 经过的代码都在本 repo 里：算法、权重、tokenizer、KV cache、SSE 路由、UI 全部都是。
 
-## 七层架构
+## 八层架构
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -56,11 +56,14 @@ SFT 后用户 query:  "What is the capital of France?"
 │ L0.5 SFT 层       base ckpt + Q/A → instruction-tuned ckpt    │
 │      00b_sft/     (~140 行 + 60 条手写数据 ≈ 28 sec CPU)      │
 ├───────────────────────────────────────────────────────────────┤
+│ L0.6 Agent SFT    instruct ckpt + ReAct traces → agent ckpt   │
+│      00c_agent_sft/  (~140 行 + 258 合成 traces ≈ 33s GPU)    │
+├───────────────────────────────────────────────────────────────┤
 │ L1   App 层       用户看到的聊天界面 + 后端 SSE 流式输出     │
 │      01_app/      (HTML + FastAPI)                            │
 ├───────────────────────────────────────────────────────────────┤
-│ L2   Chat 客户端  build prompt → POST /generate → relay 流    │
-│      02_agent/    (HTTP 客户端,纯 urllib)                     │
+│ L2   Chat / Agent build prompt → POST → relay (chat mode)    │
+│      02_agent/    or Plan→Act→Observe loop (AGENT_MODE=1)     │
 ├───────────────────────────────────────────────────────────────┤
 │ L3   Model 层     推理服务：tokenize / KV cache / SSE         │
 │      03_model/    (FastAPI + 我们的 GPT.step,零 transformers) │
@@ -141,6 +144,23 @@ cd ../01_app && uvicorn backend.main:app --reload
 # → " Paris."  ← 这 2 个 token 你自己端到端造出来的
 ```
 
+### 想要 agent 模式（带 calc + lookup 工具）
+
+```bash
+# 需要 GPU。先把 base 升级到 124M，再做两轮 SFT
+cd 00b_sft && python train_from_gpt2.py        # ~34s on RTX 4080S，instruct SFT
+cd ../00c_agent_sft && python build_data.py && python train.py  # ~34s，ReAct agent SFT
+# 然后用 agent.pt 起 L3
+MODEL_PATH=$(pwd)/out/agent.pt python ../03_model/server.py
+# 起 L1 时设 AGENT_MODE=1，启用 ReAct 循环
+cd ../01_app && AGENT_MODE=1 uvicorn backend.main:app --reload
+# 浏览器问 "What is 1234 plus 5678?"
+# 💭 I need to compute 1234 + 5678.
+# 🔧 calc(1234 + 5678)
+#    ↳ 6912
+# → 6912.    ← calc tool 真算的，model 不会自己算大数
+```
+
 ### 跳过 L0/L0.5，用 OpenAI 预训权重
 
 如果不想等训练，可以加载 OpenAI 公开的 GPT-2 124M 权重（首次会下载 ~500MB）：
@@ -184,6 +204,7 @@ cd 05_gpu    && python benchmark.py                    # 需要 NVIDIA GPU
 | 07 | [L4b：手写 BPE，bit-for-bit ≡ tiktoken](blog/07-L4-bpe.md) | byte 映射、regex 预切词、merge 规则 |
 | 08 | [L5：一次矩阵乘在 GPU 上到底怎么跑](blog/08-L5-gpu.md) | naive vs tiled vs cuBLAS、Triton flash-attn |
 | 09 | [端到端 trace：从一句 query 到一次浮点乘法](blog/09-end-to-end-trace.md) | 9 层串起来 |
+| 10 | [L0.6：教一个 124M 模型用工具](blog/10-L0.6-agent.md) | ReAct agent SFT；calc + lookup 工具；33 秒训 |
 
 每篇 1500-3000 字，5-10 分钟。源码都开放，跑一遍看实测数字。
 

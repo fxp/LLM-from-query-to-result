@@ -18,6 +18,7 @@
 | 07 | [L4b：手写 BPE，bit-for-bit 等价 tiktoken](07-L4-bpe.md) | `04_transformer/bpe.py` | byte 映射、regex 预切词、merge 规则 |
 | 08 | [L5：一次矩阵乘在 GPU 上到底怎么跑](08-L5-gpu.md) | `05_gpu/` | naive vs tiled vs cuBLAS、Triton flash-attn |
 | 09 | [端到端 trace：从一句 query 到一次浮点乘法](09-end-to-end-trace.md) | — | 把 9 层串起来，一个 token 的完整旅程 |
+| 10 | [L0.6：教一个 124M 模型用工具](10-L0.6-agent.md) | `00c_agent_sft/` + `agent_loop.py` | ReAct SFT，loss masking 关键细节，agent 不靠更聪明靠工具扩展 |
 
 ## 适合谁读
 

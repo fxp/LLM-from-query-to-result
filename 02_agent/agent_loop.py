@@ -109,7 +109,7 @@ def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:
             # ANSWER (which the L3 server emits as a special token string).
             chunk, stop = _generate_until_stop(
                 prompt,
-                stop_strings=["\nOBSERVATION:", "<|endoftext|>"],
+                stop_strings=["OBSERVATION:", "<|endoftext|>"],
                 max_tokens=MAX_NEW_PER_STEP,
             )
 
@@ -129,8 +129,8 @@ def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:
                 yield {"type": "done"}
                 return
 
-            # stop == "\nOBSERVATION:" → model just emitted an ACTION and
-            # is waiting for tool output. Find the action, run it.
+            # stop == "OBSERVATION:" → model just emitted an ACTION and is
+            # signalling it wants a tool result. Find the action, run it.
             action_line = _last_action(chunk)
             if action_line is None:
                 yield {"type": "error",
@@ -140,10 +140,10 @@ def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:
             yield {"type": "observation", "v": obs}
 
             # Append the chunk + the OBSERVATION line to prompt and continue.
-            # Note: the stop string "\nOBSERVATION:" was consumed; we add it
-            # back here, plus the real observation, plus the trailing newline
-            # so the next generation starts with `THOUGHT:` or `ANSWER:`.
-            prompt = prompt + chunk + f"\nOBSERVATION: {obs}\n"
+            # The stop string "OBSERVATION:" was consumed by the matcher;
+            # we put it back along with the real observation. Trailing
+            # newline so next generation starts at `THOUGHT:` or `ANSWER:`.
+            prompt = prompt + chunk + f"OBSERVATION: {obs}\n"
 
         yield {"type": "error",
                "message": f"hit MAX_LOOP_STEPS={MAX_LOOP_STEPS}"}
