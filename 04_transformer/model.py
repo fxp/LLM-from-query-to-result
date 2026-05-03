@@ -265,51 +265,46 @@ class GPT(nn.Module):
 # ---------------------------------------------------------------------------
 # HuggingFace mirror auto-fallback. Some regions (e.g. CN) can't reach
 # huggingface.co directly. If the user hasn't already set HF_ENDPOINT, we
-# try the default once; on any network-shaped failure, we silently retry
-# against `https://hf-mirror.com` (community-maintained CN mirror).
+# probe huggingface.co first; on connection failure, set HF_ENDPOINT to
+# `https://hf-mirror.com` (community-maintained CN mirror) BEFORE the
+# transformers library opens its httpx session. (We can't fix it after
+# the fact: huggingface_hub caches a global httpx client, and once that
+# client errors out it stays "closed" for the rest of the process.)
 # ---------------------------------------------------------------------------
 HF_MIRROR = "https://hf-mirror.com"
-_NETWORK_HINTS = (
-    "connection", "timed out", "timeout", "name resolution",
-    "unable to load", "client has been closed", "max retries",
-    "could not reach", "newconnectionerror", "huggingface.co",
-    "can't load the configuration", "make sure",
-)
 
 
-def _looks_like_network_error(exc: BaseException) -> bool:
-    """Walk the exception chain (cause + context) and look for network-shaped
-    text in any layer. transformers wraps the underlying httpx error in an
-    OSError whose own message doesn't say 'connection' — but the original
-    cause does."""
-    seen = set()
-    cur: BaseException | None = exc
-    while cur is not None and id(cur) not in seen:
-        seen.add(id(cur))
-        msg = (str(cur) + " " + repr(cur)).lower()
-        if any(h in msg for h in _NETWORK_HINTS):
-            return True
-        cur = cur.__cause__ or cur.__context__
-    return False
+def _probe_and_set_hf_endpoint() -> None:
+    """If HF_ENDPOINT isn't already set, probe huggingface.co; on failure,
+    set HF_ENDPOINT to the mirror. Idempotent: if the env var is set when
+    we enter, do nothing."""
+    import os
+    if os.environ.get("HF_ENDPOINT"):
+        return
+    import socket
+    import urllib.error
+    import urllib.request
+    try:
+        # 3-second probe of an HF API endpoint that's small + always reachable
+        # if the host is reachable. We don't follow redirects or download body.
+        req = urllib.request.Request(
+            "https://huggingface.co/api/models/openai-community/gpt2",
+            headers={"User-Agent": "Mozilla/5.0 (LLM-from-query-to-result)"},
+        )
+        urllib.request.urlopen(req, timeout=3).close()
+    except (urllib.error.URLError, socket.timeout, OSError):
+        os.environ["HF_ENDPOINT"] = HF_MIRROR
+        print(f"  HF Hub direct unreachable; using mirror: {HF_MIRROR}")
 
 
 def _hf_load_with_mirror_fallback(name, loader):
-    """Call loader(name); on network failure retry via HF mirror.
+    """Probe-and-set HF_ENDPOINT first, then call loader(name).
 
-    `loader` is e.g. `GPT2LMHeadModel.from_pretrained`. The retry sets
-    `HF_ENDPOINT` in os.environ — huggingface_hub re-reads this per call,
-    so subsequent loads in the same process pick it up automatically.
+    `loader` is e.g. `GPT2LMHeadModel.from_pretrained`. We do the probe
+    BEFORE the first transformers call so huggingface_hub opens its
+    httpx client against the right endpoint from the start. Catching the
+    failure post-facto doesn't work — the cached client gets stuck in
+    'closed' state.
     """
-    import os
-    if os.environ.get("HF_ENDPOINT"):
-        # User explicitly chose an endpoint; respect it.
-        return loader(name)
-    try:
-        return loader(name)
-    except Exception as exc:
-        if not _looks_like_network_error(exc):
-            raise
-        print(f"  HF Hub direct connection failed ({type(exc).__name__}); "
-              f"retrying via mirror: {HF_MIRROR}")
-        os.environ["HF_ENDPOINT"] = HF_MIRROR
-        return loader(name)
+    _probe_and_set_hf_endpoint()
+    return loader(name)
