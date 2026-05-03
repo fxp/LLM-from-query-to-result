@@ -25,3 +25,6 @@ site/
 # BPE vocab files (regenerable, downloaded on first run)
 04_transformer/data/encoder.json
 04_transformer/data/vocab.bpe
+
+# Claude Code session artifacts
+.claude/
