@@ -132,6 +132,10 @@ cd 04_transformer && python bpe.py                     # 验证手写 BPE
 cd 05_gpu   && python benchmark.py                     # 需要 NVIDIA GPU
 ```
 
+## 配套博客
+
+10 篇为什么 + 怎么做 + 多少数字的系列文章——[blog/ 目录](https://github.com/fxp/LLM-from-query-to-result/tree/main/blog)：序章 + L0/L0.5/L1/L2/L3/L4a/L4b/L5 各一篇 + 端到端 trace 一篇。每篇 5-10 分钟。
+
 ## 怎么读
 
 **想看 model 是怎么"诞生"的**：[L0](00-train.md) — 6 分钟在 CPU 上把 loss 从 10.8 (random) 降到 ~4.5，看到 forward → loss → backward → optimizer 闭环。

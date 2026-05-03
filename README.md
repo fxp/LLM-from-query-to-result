@@ -166,6 +166,27 @@ cd 04_transformer && python bpe.py                     # 验证手写 BPE
 cd 05_gpu    && python benchmark.py                    # 需要 NVIDIA GPU
 ```
 
+## 配套博客
+
+如果你不想读源码，先想看为什么这么设计、每一段代码背后的"为什么"——有一个 10 篇的配套系列：
+
+📖 **[blog/](./blog) · 从一行 query 到 GPU 上的一次浮点乘法**
+
+| # | 文章 | 主题 |
+|---|---|---|
+| 00 | [序章](blog/00-overview.md) | 全栈视角 + 设计原则 |
+| 01 | [L0：从莎士比亚训出一个 GPT](blog/01-L0-training.md) | 预训练循环、loss 为什么从 10.8 降到 4.5 |
+| 02 | [L0.5：24 秒变 instruct](blog/02-L0.5-sft.md) | SFT、loss masking、知识 vs 格式 |
+| 03 | [L1：浏览器里那一个个蹦出来的字](blog/03-L1-app.md) | SSE + ~80 行前端 |
+| 04 | [L2：Chat 客户端的最小本质](blog/04-L2-chat-client.md) | 删掉所有不必要的抽象 |
+| 05 | [L3：自己写 KV cache 的推理服务](blog/05-L3-inference-server.md) | prefill vs decode、HF mirror fallback |
+| 06 | [L4a：300 行手写 GPT-2](blog/06-L4-transformer.md) | embed / MHA / FFN / LN / KV cache |
+| 07 | [L4b：手写 BPE，bit-for-bit ≡ tiktoken](blog/07-L4-bpe.md) | byte 映射、regex 预切词、merge 规则 |
+| 08 | [L5：一次矩阵乘在 GPU 上到底怎么跑](blog/08-L5-gpu.md) | naive vs tiled vs cuBLAS、Triton flash-attn |
+| 09 | [端到端 trace：从一句 query 到一次浮点乘法](blog/09-end-to-end-trace.md) | 9 层串起来 |
+
+每篇 1500-3000 字，5-10 分钟。源码都开放，跑一遍看实测数字。
+
 ## 怎么读这个 repo
 
 **想看 model 是怎么"诞生"的**：[L0](./00_train) — 6 分钟在 CPU 上把 loss 从 10.8 (random) 降到 ~4.5，看到 forward → loss → backward → optimizer 闭环。
