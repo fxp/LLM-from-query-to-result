@@ -15,8 +15,7 @@ node_modules/
 .ipynb_checkpoints/
 site/
 
-# L0 training artifacts (regenerable)
-00_train/data/input.txt
+# L0 training artifacts (regenerable; input.txt bundled in repo for offline use)
 00_train/data/*.bin
 00_train/out/
 
