@@ -4,39 +4,64 @@
 
 📖 **在线阅读**：<https://fxp.github.io/LLM-from-query-to-result/>
 
-当你在 ChatGPT 里输入 "帮我做一个 Todo 网站"，按下回车，到屏幕上出现一个能用的网站，这中间到底发生了什么？
+当你在 ChatGPT 里敲一句话，按下回车，屏幕上一个字一个字蹦出回答——这中间到底发生了什么？从浏览器里的字符，到 GPU 上的一次浮点乘法，要穿过多少层？
 
-这个 repo 把整条链路切成 5 层，**每一层都有独立的讲解和最小可运行代码**。你可以单独跑任意一层，也可以把它们串起来看完整 trace。
+这个 repo 把整条链路切成 7 层，**每一层都有独立的讲解和最小可运行代码**。你可以单独跑任意一层，也可以把它们串起来看完整 trace。
+
+**这是真正的 from-scratch**：
+- ✅ 模型架构（L4，~330 行手写 GPT-2）
+- ✅ 训练循环（L0，~140 行 AdamW + cosine schedule）
+- ✅ 训练数据（L0，1.1 MB 莎士比亚纯文本）
+- ✅ Tokenizer（L4 `bpe.py`，手写的 BPE，与 tiktoken 在中/日/emoji/标点上 bit-for-bit 等价）
+- ✅ KV cache（L4 `GPT.step`，自己实现）
+- ✅ 推理服务（L3，~140 行 FastAPI + SSE，**零 transformers runtime 依赖**）
+- ✅ Instruct 微调（L0.5，~140 行 SFT 在自己 base model 上跑 28 秒，把 base 的"接龙莎翁"变成"答 'Paris.'"）
+- ✅ Chat 客户端（L2，纯 urllib HTTP）
+- ✅ Web UI（L1，纯 HTML + fetch streaming）
+
+**唯一的"借"**：PyTorch 的 tensor / autograd（这是底座，不重写），可选下载 OpenAI 公开的 GPT-2 124M 权重（仅 fallback，默认走我们自训的 model）。
 
 ## 贯穿全 repo 的例子
 
 ```
-用户 query:  "帮我做一个 Todo 网站"
-最终产物:    examples/todo-app/ 下一个能跑的前后端网站
+SFT 后用户 query:  "What is the capital of France?"
+最终产物:           浏览器里流式涌出 " Paris.<|endoftext|>"  （greedy 模式）
+                  这 3 个 token 全部由本仓自己训出来的 7M GPT 产出
 ```
 
-这个 query 会穿过 5 层，我们会在每一层把它的"形态"打印出来：
-在 L1 它是一串 HTTP bytes，在 L2 它变成了一个 plan + 若干 tool call，
-在 L3 它是一个 batch 里的 prompt，在 L4 它是 tensor，在 L5 它是 GPU SM 上的指令。
+完整流转：
+- **L0**：莎士比亚 1.1MB → 我们的 BPE → 0.34M tokens → 我们的 GPT (n_layer=4, n_embd=128) → AdamW 1000 步 → `ckpt.pt`
+- **L0.5**：base ckpt + 63 条手写 Q/A → SFT 50 epochs (28 秒) → `sft.pt`（学会 instruction 格式 + 个别事实）
+- **L3**：load `sft.pt` 用我们的 GPT.step() 跑推理（KV cache 自己实现）
+- **L2**：把 query 包成 `Q: ...\nA:` POST 给 L3
+- **L1**：浏览器 → FastAPI → SSE 流式返回每个 token
 
-## 五层架构
+**整条链路里，PyTorch 是唯一非自家的依赖**（tensor 库 + autograd 是底座，不重写）。每个 token 经过的代码都在本 repo 里：算法、权重、tokenizer、KV cache、SSE 路由、UI 全部都是。
+
+## 七层架构
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ L1  App 层        用户看到的聊天界面 + 后端 SSE 流式输出     │
-│     01_app/       (HTML + FastAPI)                            │
+│ L0   训练层       prepare data → train loop → checkpoint      │
+│      00_train/    (PyTorch + AdamW, ~140 行 ≈ 6 min CPU)      │
 ├───────────────────────────────────────────────────────────────┤
-│ L2  Agent 层      Plan → Act (tool use) → Observe 循环        │
-│     02_agent/     (Claude API + write_file/run_shell 工具)   │
+│ L0.5 SFT 层       base ckpt + Q/A → instruction-tuned ckpt    │
+│      00b_sft/     (~140 行 + 60 条手写数据 ≈ 28 sec CPU)      │
 ├───────────────────────────────────────────────────────────────┤
-│ L3  Model 层      推理服务：tokenize / batch / KV cache /    │
-│     03_model/     stream (HuggingFace transformers)          │
+│ L1   App 层       用户看到的聊天界面 + 后端 SSE 流式输出     │
+│      01_app/      (HTML + FastAPI)                            │
 ├───────────────────────────────────────────────────────────────┤
-│ L4  Transformer   从零实现 GPT-2：embed / MHA / FFN / LN     │
-│     04_transformer/  (PyTorch, ~300 行，可加载 HF 权重)       │
+│ L2   Chat 客户端  build prompt → POST /generate → relay 流    │
+│      02_agent/    (HTTP 客户端,纯 urllib)                     │
 ├───────────────────────────────────────────────────────────────┤
-│ L5  GPU 层        矩阵乘和 attention 在 GPU 上怎么跑         │
-│     05_gpu/       (CUDA matmul + Triton flash-attention)      │
+│ L3   Model 层     推理服务：tokenize / KV cache / SSE         │
+│      03_model/    (FastAPI + 我们的 GPT.step,零 transformers) │
+├───────────────────────────────────────────────────────────────┤
+│ L4   Transformer  从零实现 GPT-2：embed / MHA / FFN / LN     │
+│      04_transformer/  (PyTorch, ~330 行 + 手写 BPE ~150 行)   │
+├───────────────────────────────────────────────────────────────┤
+│ L5   GPU 层       矩阵乘和 attention 在 GPU 上怎么跑         │
+│      05_gpu/      (CUDA matmul + Triton flash-attention)      │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -45,31 +70,25 @@
 ## 一个请求的生命周期（概览）
 
 ```
-  浏览器                  后端                 Agent 循环
-  ───────                 ─────                ──────────
-    │                       │                      │
-    │  POST /chat           │                      │
-    │ ─────────────────────▶│                      │
-    │                       │  agent.run(query)    │
-    │                       │ ────────────────────▶│
-    │                       │                      │
-    │                       │                      │  ┌──────────────┐
-    │                       │                      │  │ LLM API call │──▶ L3 推理服务
-    │                       │                      │  └──────────────┘        │
-    │                       │                      │        ▲                 │ forward()
-    │                       │                      │        │                 ▼
-    │                       │                      │   next token       L4 Transformer
-    │                       │                      │                         │
-    │                       │                      │                         │ matmul()
-    │  SSE: "正在创建..."   │                      │                         ▼
-    │ ◀─────────────────────│                      │                     L5 GPU kernel
-    │                       │                      │
-    │                       │                      │  tool: write_file("index.html")
-    │                       │                      │  tool: write_file("server.py")
-    │                       │                      │  tool: run_shell("pip install flask")
-    │                       │                      │
-    │  SSE: done            │                      │
-    │ ◀─────────────────────│                      │
+  浏览器              L1 后端           L2 客户端         L3 推理服务
+  ───────             ─────             ─────────         ──────────
+    │                   │                  │                  │
+    │  POST /chat       │                  │                  │
+    │ ─────────────────▶│                  │                  │
+    │                   │  run_agent(q)    │                  │
+    │                   │ ────────────────▶│                  │
+    │                   │                  │ POST /generate   │
+    │                   │                  │ ────────────────▶│
+    │                   │                  │                  │ tokenize + forward
+    │                   │                  │                  │   ↓ L4 (GPT-2)
+    │                   │                  │                  │   ↓ L5 (matmul)
+    │                   │                  │ data: {token}    │
+    │                   │   token event    │ ◀────────────────│
+    │  SSE: token       │ ◀────────────────│   ...            │
+    │ ◀─────────────────│                  │ ◀────────────────│
+    │   ...             │                  │                  │
+    │  SSE: done        │                  │                  │
+    │ ◀─────────────────│                  │                  │
 ```
 
 ## 快速开始
@@ -77,51 +96,86 @@
 ### 环境
 ```bash
 pip install -r requirements.txt
-# L5 的 Triton 部分需要 CUDA GPU；没 GPU 可跳过。
+# L5 的 Triton/CUDA 部分需要 NVIDIA GPU；没 GPU 可跳过。
 ```
 
-### 端到端跑一遍（L1 + L2）
+### 完全 from-scratch（推荐先做这一遍）
+
 ```bash
-export ANTHROPIC_API_KEY=sk-...
+# Step 1: 训自己的 base model（M1 CPU ~6 min，1000 步，loss 10.8 → ~4.5）
+cd 00_train && python prepare.py && python train.py
+
+# Step 2: SFT 让它能听懂问答（M1 CPU ~28 sec，50 epochs，loss 9 → 1.7）
+cd ../00b_sft && python train.py
+
+# Step 3: 用 SFT'd ckpt 起 L3 服务
+MODEL_PATH=$(pwd)/out/sft.pt python ../03_model/server.py
+
+# Step 4: 另开终端，起 L1 web app + 浏览器
+cd ../01_app && uvicorn backend.main:app --reload
+# 浏览器打开 http://localhost:8000，问 "What is the capital of France?"
+# → " Paris."  ← 这 2 个 token 你自己端到端造出来的
+```
+
+### 跳过 L0/L0.5，用 OpenAI 预训权重
+
+如果不想等训练，可以加载 OpenAI 公开的 GPT-2 124M 权重（首次会下载 ~500MB）：
+
+```bash
+# 终端 1：L3（不设 MODEL_PATH 就走 GPT.from_pretrained("gpt2")）
+cd 03_model && python server.py
+
+# 终端 2：L1 web app
 cd 01_app && uvicorn backend.main:app --reload
-# 浏览器打开 http://localhost:8000，输入 "帮我做一个 Todo 网站"
 ```
 
 ### 独立跑每一层
 ```bash
-cd 02_agent && python agent.py "帮我做一个 Todo 网站"
-cd 03_model && python server.py        # 另开一个终端跑 client.py
+cd 00_train  && python prepare.py && python train.py    # 训 base
+cd 00_train  && python sample.py "ROMEO:"               # 采样 base
+cd 00b_sft   && python train.py                         # SFT
+# L2 / client.py 依赖 L3 先起 03_model/server.py
+cd 02_agent  && python agent.py "What is the capital of France?"
+cd 03_model  && python server.py
 cd 04_transformer && python inference.py "Hello, I am"
-cd 05_gpu && python benchmark.py
+cd 04_transformer && python bpe.py                     # 验证手写 BPE
+cd 05_gpu    && python benchmark.py                    # 需要 NVIDIA GPU
 ```
 
 ## 怎么读这个 repo
 
-**如果你是产品/应用开发者**：从 L1、L2 开始，看到"Agent 是怎么把一句话变成一堆 tool call 的"就够用了。
+**想看 model 是怎么"诞生"的**：[L0](./00_train) — 6 分钟在 CPU 上把 loss 从 10.8 (random) 降到 ~4.5，看到 forward → loss → backward → optimizer 闭环。
 
-**如果你做 infra / 推理优化**：重点看 L3（batching、KV cache 的实际实现）和 L5（kernel 层做优化的地方）。
+**想看 base model 怎么变成 instruct model**：[L0.5](./00b_sft) — 28 秒 SFT 把 "续写莎翁" 的 base 变成 "答 'Paris.'" 的 instruct 模型。
 
-**如果你想理解模型本身**：L4 是核心——300 行看懂 transformer。
+**产品/应用开发者**：从 [L1](./01_app)、[L2](./02_agent) 开始，看清楚一条 chat 请求从浏览器一路下到推理服务的每个环节。
 
-**如果你全都想懂**：按顺序读下来，`examples/trace.md` 里有一条从 query 一路到 GPU 指令的完整 trace，可以作为串线索的地图。
+**做 infra / 推理优化**：重点看 [L3](./03_model)（KV cache 的实际实现，~140 行无外部依赖）和 [L5](./05_gpu)（kernel 层做优化的地方）。
+
+**想理解模型本身**：[L4](./04_transformer) 是核心——~330 行看懂 transformer，加 ~150 行手写 BPE。L0 / L0.5 / L3 都用同一个 GPT 类。
+
+**全都想懂**：按 L0 → L0.5 → L1..L5 顺序读下来，`examples/trace.md` 里有一条从 query 一路到 GPU 指令的完整 trace。
 
 ## 目录
 
 | 目录 | 层 | 语言 | 运行依赖 |
 |---|---|---|---|
-| [`01_app/`](./01_app) | App | Python + HTML/JS | FastAPI |
-| [`02_agent/`](./02_agent) | Agent | Python | anthropic SDK |
-| [`03_model/`](./03_model) | Model 服务 | Python | transformers, torch |
-| [`04_transformer/`](./04_transformer) | Transformer | Python | torch |
+| [`00_train/`](./00_train) | 训练 base | Python | torch, regex |
+| [`00b_sft/`](./00b_sft) | SFT 微调 | Python + JSON | torch |
+| [`01_app/`](./01_app) | Web App | Python + HTML/JS | FastAPI |
+| [`02_agent/`](./02_agent) | Chat 客户端 | Python | 标准库 (urllib) |
+| [`03_model/`](./03_model) | Model 服务 | Python | FastAPI, torch |
+| [`04_transformer/`](./04_transformer) | Transformer + BPE | Python | torch, regex |
 | [`05_gpu/`](./05_gpu) | GPU kernel | CUDA / Triton | nvcc, triton, CUDA GPU |
-| [`examples/`](./examples) | — | Markdown | — |
+| [`examples/`](./examples) | end-to-end trace | Markdown | — |
 
 ## 设计原则
 
-- **每层代码 < 300 行**：超过就说明讲多了，砍掉。
-- **不引入陌生抽象**：能用标准库就用标准库，不造框架。
-- **"看得见"优先于"快"**：L3 的 batch 是 print 出来的，L4 的每层激活 shape 是打印的，L5 有 roofline benchmark——看得见才算讲清楚了。
-- **一个贯穿例子**：所有层都用 "帮我做一个 Todo 网站"，避免读者 context-switch。
+- **每层核心代码 < 300 行**：超过就说明讲多了，砍掉。
+- **不引入陌生抽象**：能用标准库就用标准库，不造框架。第三方依赖只剩 PyTorch（不重写）+ FastAPI（写 web server 没必要重新造）+ regex（BPE 需要 unicode pattern）。
+- **零外部 LLM API、零外部 LLM 库 runtime**：L0 训 base、L0.5 SFT、L3 推理（含 KV cache）、L4 BPE 全部本地代码。L4 的 `from_pretrained("gpt2")` 是唯一可选用 transformers 的地方（仅下载 OpenAI 权重时），跳过它全栈零 transformers/tiktoken 依赖。
+- **"看得见"优先于"快"**：L0 print loss 下降，L0.5 print SFT 前后对比，L3 print KV cache 长度，L4 print 每层激活 shape，L4 BPE 自测对齐 tiktoken，L5 有 roofline benchmark——看得见才算讲清楚了。
+- **一个贯穿例子**：base 模型用 `ROMEO:` 续写莎翁，SFT 后用 `What is the capital of France?` 测 instruction following。
 
 ## License
 

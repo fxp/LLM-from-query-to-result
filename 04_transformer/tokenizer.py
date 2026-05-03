@@ -1,27 +1,19 @@
-"""Minimal tokenizer wrapper.
+"""Tokenizer facade — thin shim over our hand-written BPE.
 
-GPT-2 uses a Byte-Pair Encoding (BPE) over bytes with a 50257-entry vocab
-(50000 merges + 256 byte fallbacks + 1 <|endoftext|>). We don't reimplement
-BPE here — it's conceptually simple but full of edge cases (whitespace, UTF-8,
-regex pre-tokenizer). The `tiktoken` library ships a drop-in tokenizer that
-matches HuggingFace's exactly, so we use that.
+GPT-2 uses Byte-Pair Encoding over bytes with a 50,257-entry vocab. The
+algorithm + vocab loading + UTF-8 byte mapping all live in `bpe.py`. This
+file just exposes the three call sites the rest of the repo uses:
 
-If you'd like to read a from-scratch BPE, nanoGPT and minbpe are good.
+    encode(text)     -> list[int]      # used by 00_train, 03_model, 02_agent
+    decode(ids)      -> str            # used by 03_model
+    decode_one(id)   -> str            # used by 04_transformer/inference
+
+We could call `bpe.encode` directly everywhere, but keeping this facade
+means swapping in a different tokenizer (a hand-trained BPE, char-level,
+SentencePiece, etc.) is a one-file change.
 """
 from __future__ import annotations
 
-import tiktoken
+from bpe import decode, decode_one, encode  # noqa: F401  (re-export)
 
-_enc = tiktoken.get_encoding("gpt2")
-
-
-def encode(text: str) -> list[int]:
-    return _enc.encode(text)
-
-
-def decode(ids: list[int]) -> str:
-    return _enc.decode(ids)
-
-
-def decode_one(token_id: int) -> str:
-    return _enc.decode([token_id])
+__all__ = ["encode", "decode", "decode_one"]

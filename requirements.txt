@@ -1,8 +1,9 @@
 fastapi>=0.110
 uvicorn[standard]>=0.27
-transformers>=4.40
 torch>=2.2
-tiktoken>=0.6
 numpy>=1.26
+regex>=2023.0          # used by our hand-written BPE for \p{L} \p{N}
+transformers>=4.40     # only used by L4 GPT.from_pretrained() to download OpenAI gpt2 weights;
+                       # not used at runtime (L3 inference is pure torch + our GPT class)
 # L5 only, optional:
 # triton>=2.2

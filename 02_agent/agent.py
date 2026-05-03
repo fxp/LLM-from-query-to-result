@@ -44,8 +44,11 @@ def build_prompt(query: str) -> str:
     just continues text. So we frame the query as the start of a written
     answer and let it continue. This is the same trick OpenAI used in the
     GPT-2/GPT-3 era before instruction-tuning existed.
+
+    Format matches `00b_sft/data.json` so that an SFT'd checkpoint
+    trained on the same template behaves predictably.
     """
-    return f"Question: {query}\nAnswer:"
+    return f"Q: {query}\nA:"
 
 
 def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:

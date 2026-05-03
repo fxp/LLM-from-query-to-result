@@ -1,46 +1,75 @@
-"""L3 inference server (minimal).
+"""L3 inference server (from-scratch).
 
 POST /generate {prompt, max_tokens, temperature} -> SSE token stream.
 
-Runs GPT-2 small on CPU or CUDA. Shows in the server log:
-  - the tokens the prompt became
-  - how long prefill vs decode steps take
-  - how the KV cache grows step by step
+This server uses **our own** GPT class (`04_transformer/model.py`) and our
+own KV cache logic. No transformers.GPT2LMHeadModel runtime dependency.
 
-What it deliberately skips: continuous batching, paged attention, quantization,
-multi-GPU. Those matter for throughput in production but would obscure the
-core "request -> token stream" story.
+Two modes, picked by env var:
+  MODEL_PATH=path/to/ckpt.pt  -> load a checkpoint trained by 00_train
+  (unset)                     -> load OpenAI's pretrained gpt2 weights
+                                  via L4's GPT.from_pretrained() (one-shot
+                                  HF download, then run on our own model)
+
+What it shows:
+  - tokens the prompt became (BPE)
+  - per-step prefill vs decode timings
+  - KV cache length growing one token at a time
+
+What it deliberately skips:
+  - continuous batching, paged attention, quantization, multi-GPU.
 """
 from __future__ import annotations
 
 import asyncio
 import json
+import os
+import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import torch
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
-MODEL_NAME = "gpt2"
+# Reuse L4's GPT and tokenizer.
+REPO = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(REPO / "04_transformer"))
+from model import GPT, GPTConfig  # noqa: E402
+import tokenizer  # noqa: E402
+
+MODEL_PATH = os.environ.get("MODEL_PATH")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 
 @dataclass
 class Engine:
-    model: GPT2LMHeadModel
-    tok: GPT2TokenizerFast
+    model: GPT
+    eos_id: int = 50256  # GPT-2's <|endoftext|>
 
 
 def load() -> Engine:
-    print(f"Loading {MODEL_NAME} on {DEVICE}...")
-    tok = GPT2TokenizerFast.from_pretrained(MODEL_NAME)
-    model = GPT2LMHeadModel.from_pretrained(MODEL_NAME).to(DEVICE).eval()
+    if MODEL_PATH:
+        print(f"Loading local checkpoint -> {MODEL_PATH} on {DEVICE}...")
+        blob = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
+        cfg = GPTConfig(**blob["config"])
+        model = GPT(cfg).to(DEVICE).eval()
+        model.load_state_dict(blob["model"])
+        n = sum(p.numel() for p in model.parameters())
+        print(f"Loaded: {n/1e6:.2f}M params  "
+              f"(local: n_layer={cfg.n_layer} n_head={cfg.n_head} "
+              f"n_embd={cfg.n_embd} block_size={cfg.block_size})")
+        if "final_loss" in blob:
+            print(f"  trained {blob.get('steps','?')} steps, final loss: {blob['final_loss']}")
+        return Engine(model=model)
+
+    print(f"Loading pretrained gpt2 on {DEVICE} (via L4 GPT.from_pretrained)...")
+    model = GPT.from_pretrained("gpt2").to(DEVICE).eval()
     n = sum(p.numel() for p in model.parameters())
-    print(f"Loaded: {n/1e6:.0f}M params")
-    return Engine(model=model, tok=tok)
+    print(f"Loaded: {n/1e6:.0f}M params  (HuggingFace pretrained gpt2)")
+    return Engine(model=model)
 
 
 ENGINE: Engine | None = None
@@ -62,50 +91,51 @@ def _startup() -> None:
 @app.post("/generate")
 async def generate(req: GenRequest) -> StreamingResponse:
     assert ENGINE is not None
-    tok, model = ENGINE.tok, ENGINE.model
+    model = ENGINE.model
+    eos_id = ENGINE.eos_id
 
     # === Tokenize ===
     # The string "Once upon a time" becomes e.g. [7454, 2402, 257, 640].
     # This is L3's boundary with the outside world: from here down it's tensors.
-    input_ids = tok(req.prompt, return_tensors="pt").input_ids.to(DEVICE)
-    print(f"[prompt] {req.prompt!r} -> tokens {input_ids.tolist()[0]}")
+    ids = tokenizer.encode(req.prompt)
+    input_ids = torch.tensor([ids], device=DEVICE, dtype=torch.long)
+    print(f"[prompt] {req.prompt!r} -> tokens {ids}")
 
     async def stream():
-        past = None  # the KV cache
-        cur_ids = input_ids
-        for step in range(req.max_tokens):
-            t0 = time.perf_counter()
-            with torch.no_grad():
-                # model(...) ultimately calls forward() on each transformer
-                # block — see 04_transformer for what that actually does.
-                out = model(input_ids=cur_ids, past_key_values=past, use_cache=True)
-            dt = (time.perf_counter() - t0) * 1000
-            logits = out.logits[:, -1, :]             # last position only
-            past = out.past_key_values                 # <- grown by cur_ids tokens
-            # transformers 5.x returns a DynamicCache object (no longer a tuple);
-            # keep the legacy tuple path as a fallback for older versions.
-            kv_len = past.get_seq_length() if hasattr(past, "get_seq_length") else past[0][0].shape[-2]
+        # === Prefill: feed the full prompt, get logits at every position +
+        # initial KV cache. Cache lives in CPU/GPU memory between steps.
+        t0 = time.perf_counter()
+        logits, kvs = model.step(input_ids)
+        prefill_ms = (time.perf_counter() - t0) * 1000
 
-            # Temperature sampling. Real servers also support top_p / top_k.
+        for step_i in range(req.max_tokens):
+            # Sample from the LAST position. Real servers also do top-p/top-k.
+            last = logits[0, -1]
             if req.temperature <= 0:
-                next_id = logits.argmax(dim=-1, keepdim=True)
+                next_id_int = int(last.argmax().item())
             else:
-                probs = torch.softmax(logits / req.temperature, dim=-1)
-                next_id = torch.multinomial(probs, num_samples=1)
+                probs = torch.softmax(last / req.temperature, dim=-1)
+                next_id_int = int(torch.multinomial(probs, num_samples=1).item())
+            next_id = torch.tensor([[next_id_int]], device=DEVICE, dtype=torch.long)
 
-            piece = tok.decode(next_id[0])
-            kind = "prefill" if step == 0 else "decode"
-            print(f"[step {step:>2}] {kind:<7} {dt:6.1f} ms  kv_len={kv_len:<4}  -> {piece!r}")
+            piece = tokenizer.decode([next_id_int])
+            kv_len = kvs[0][0].size(2)  # K cache seq length
+            kind = "prefill" if step_i == 0 else "decode"
+            dt = prefill_ms if step_i == 0 else (time.perf_counter() - t1) * 1000
+            print(f"[step {step_i:>2}] {kind:<7} {dt:6.1f} ms  "
+                  f"kv_len={kv_len:<4}  -> {piece!r}")
 
             yield f"data: {json.dumps({'token': piece})}\n\n"
 
-            if next_id.item() == tok.eos_token_id:
+            if next_id_int == eos_id:
                 break
-            cur_ids = next_id  # <-- decode step: feed only the 1 new token
-            # Yield to the event loop so SSE actually flushes.
-            await asyncio.sleep(0)
 
-        yield "data: {\"done\": true}\n\n"
+            # === Decode: 1 new token, attended against cached K/V ===
+            t1 = time.perf_counter()
+            logits, kvs = model.step(next_id, kvs)
+            await asyncio.sleep(0)  # let SSE flush
+
+        yield 'data: {"done": true}\n\n'
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 

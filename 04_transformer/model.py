@@ -50,7 +50,18 @@ class CausalSelfAttention(nn.Module):
         self.c_attn = nn.Linear(cfg.n_embd, 3 * cfg.n_embd)
         self.c_proj = nn.Linear(cfg.n_embd, cfg.n_embd)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self,
+        x: torch.Tensor,
+        kv_cache: tuple[torch.Tensor, torch.Tensor] | None = None,
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
+        """If `kv_cache` is given, concat new K/V to it and skip the causal
+        mask (single-query decode path). Returns (output, updated_kv).
+
+        For training and prefill: pass kv_cache=None, get fresh causal attn.
+        For autoregressive decode (one new token): pass the previous (k, v)
+        and we attend the new query against past+new keys.
+        """
         B, T, D = x.shape
         qkv = self.c_attn(x)                          # [B, T, 3D]
         q, k, v = qkv.split(self.n_embd, dim=2)       # 3 × [B, T, D]
@@ -59,12 +70,20 @@ class CausalSelfAttention(nn.Module):
         q = q.view(B, T, self.n_head, head_dim).transpose(1, 2)  # [B, h, T, hd]
         k = k.view(B, T, self.n_head, head_dim).transpose(1, 2)
         v = v.view(B, T, self.n_head, head_dim).transpose(1, 2)
+        if kv_cache is not None:
+            past_k, past_v = kv_cache
+            k = torch.cat([past_k, k], dim=2)        # [B, h, T_past + T, hd]
+            v = torch.cat([past_v, v], dim=2)
         # scaled dot product attention, with built-in causal mask.
         # (PyTorch will call flash-attention under the hood on CUDA;
         # see 05_gpu/attention_triton.py for how that kernel is built.)
-        y = F.scaled_dot_product_attention(q, k, v, is_causal=True)  # [B, h, T, hd]
-        y = y.transpose(1, 2).contiguous().view(B, T, D)             # [B, T, D]
-        return self.c_proj(y)
+        # When kv_cache is used and T=1, no causal mask is needed: a single
+        # query may attend all past keys. is_causal=True only makes sense
+        # when q and k have the same length (prefill / training case).
+        is_causal = kv_cache is None
+        y = F.scaled_dot_product_attention(q, k, v, is_causal=is_causal)  # [B, h, T, hd]
+        y = y.transpose(1, 2).contiguous().view(B, T, D)                    # [B, T, D]
+        return self.c_proj(y), (k, v)
 
 
 class MLP(nn.Module):
@@ -92,10 +111,15 @@ class Block(nn.Module):
         self.ln_2 = nn.LayerNorm(cfg.n_embd)
         self.mlp = MLP(cfg)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.attn(self.ln_1(x))
+    def forward(
+        self,
+        x: torch.Tensor,
+        kv_cache: tuple[torch.Tensor, torch.Tensor] | None = None,
+    ) -> tuple[torch.Tensor, tuple[torch.Tensor, torch.Tensor]]:
+        attn_out, new_kv = self.attn(self.ln_1(x), kv_cache)
+        x = x + attn_out
         x = x + self.mlp(self.ln_2(x))
-        return x
+        return x, new_kv
 
 
 class GPT(nn.Module):
@@ -108,7 +132,35 @@ class GPT(nn.Module):
         self.ln_f = nn.LayerNorm(cfg.n_embd)
         # lm_head shares weights with the embedding (tied) — saves ~40M params.
 
-    def forward(self, input_ids: torch.Tensor, *, verbose: bool = False) -> torch.Tensor:
+        # GPT-2 / nanoGPT init: N(0, 0.02) for all matmul weights & embeddings,
+        # zeros for biases. Residual-output projections (c_proj at the end of
+        # each sublayer) get extra scaling by 1/sqrt(2N) so the residual stream
+        # variance doesn't blow up with depth. Without this, initial loss is
+        # ~80 instead of ~11 and the first ~100 steps just walk it back down.
+        self.apply(self._init_weights)
+        std_resid = 0.02 / math.sqrt(2 * cfg.n_layer)
+        for name, p in self.named_parameters():
+            if name.endswith("c_proj.weight"):
+                nn.init.normal_(p, mean=0.0, std=std_resid)
+
+    @staticmethod
+    def _init_weights(module: nn.Module) -> None:
+        if isinstance(module, nn.Linear):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        targets: torch.Tensor | None = None,
+        *,
+        verbose: bool = False,
+    ) -> torch.Tensor | tuple[torch.Tensor, torch.Tensor]:
+        """If `targets` is given, returns (logits, loss) — used by 00_train.
+        Otherwise returns logits — used by inference (03_model, 04_transformer)."""
         B, T = input_ids.shape
         assert T <= self.cfg.block_size
         pos = torch.arange(T, device=input_ids.device)
@@ -119,7 +171,7 @@ class GPT(nn.Module):
             if verbose:
                 import time
                 t0 = time.perf_counter()
-            x = block(x)
+            x, _ = block(x)  # discard kv (not caching during training/full forward)
             if verbose:
                 dt = (time.perf_counter() - t0) * 1000
                 print(f"  block {i:>2} attn+ffn                   shape={tuple(x.shape)}  {dt:.1f} ms")
@@ -129,7 +181,56 @@ class GPT(nn.Module):
         logits = x @ self.wte.weight.T                         # tied [B, T, V]
         if verbose:
             print(f"  logits = x @ wte.T                 shape={tuple(logits.shape)}")
-        return logits
+        if targets is None:
+            return logits
+        # Cross-entropy: predict targets[t] from input_ids[<=t]. Standard
+        # next-token loss; ignore_index=-1 lets the caller mask padded slots.
+        loss = F.cross_entropy(
+            logits.view(-1, logits.size(-1)),
+            targets.view(-1),
+            ignore_index=-1,
+        )
+        return logits, loss
+
+    # ------------------------------------------------------------------
+    # Inference with KV cache. Used by L3's streaming server (which used
+    # to lean on transformers.GPT2LMHeadModel for this; now it uses us).
+    # ------------------------------------------------------------------
+    @torch.no_grad()
+    def step(
+        self,
+        input_ids: torch.Tensor,
+        kv_caches: list[tuple[torch.Tensor, torch.Tensor]] | None = None,
+    ) -> tuple[torch.Tensor, list[tuple[torch.Tensor, torch.Tensor]]]:
+        """One forward pass with optional per-layer KV cache.
+
+        Two modes:
+          - prefill: kv_caches=None, input_ids=[B, T_prompt]. Returns
+            (logits[B, T, V], cache[layer]=(K[B, h, T, hd], V[...]))
+          - decode:  kv_caches=prev, input_ids=[B, 1]. Cache grows by 1.
+
+        The position embedding offset is inferred from the cache length —
+        so the caller doesn't have to track positions.
+        """
+        B, T = input_ids.shape
+        if kv_caches is None:
+            kv_caches = [None] * len(self.h)
+            pos_offset = 0
+        else:
+            # Cache shape is [B, n_head, T_past, head_dim]; T_past = pos_offset.
+            pos_offset = kv_caches[0][0].size(2)
+        assert pos_offset + T <= self.cfg.block_size, (
+            f"context overflow: {pos_offset}+{T} > {self.cfg.block_size}"
+        )
+        pos = torch.arange(pos_offset, pos_offset + T, device=input_ids.device)
+        x = self.wte(input_ids) + self.wpe(pos)
+        new_caches = []
+        for block, kv in zip(self.h, kv_caches):
+            x, new_kv = block(x, kv)
+            new_caches.append(new_kv)
+        x = self.ln_f(x)
+        logits = x @ self.wte.weight.T
+        return logits, new_caches
 
     # ------------------------------------------------------------------
     # Load GPT-2 weights from HuggingFace. Names map 1:1 to our layout.
