@@ -1,0 +1,13 @@
+{
+  "sandbox": {
+    "network": {
+      "allowedDomains": [
+        "huggingface.co",
+        "*.huggingface.co",
+        "cdn-lfs.huggingface.co",
+        "cdn-lfs-us-1.huggingface.co",
+        "cas-bridge.xethub.hf.co"
+      ]
+    }
+  }
+}

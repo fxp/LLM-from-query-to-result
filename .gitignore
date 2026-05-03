@@ -1,0 +1,33 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+.DS_Store
+*.so
+*.o
+build/
+dist/
+*.egg-info/
+generated/
+node_modules/
+.ipynb_checkpoints/
+site/
+
+# L0 training artifacts (regenerable; input.txt bundled in repo for offline use)
+00_train/data/*.bin
+00_train/out/
+
+# L0.5 SFT artifacts (regenerable)
+00b_sft/out/
+
+# BPE vocab files (regenerable, downloaded on first run)
+04_transformer/data/encoder.json
+04_transformer/data/vocab.bpe
+
+# Claude Code session artifacts
+.claude/
+
+# L0.6 Agent SFT artifacts
+00c_agent_sft/out/

@@ -1,0 +1,39 @@
+name: Build and publish docs
+
+on:
+  push:
+    branches:
+      - main
+      - claude/chatgpt-agent-demo-1mKiT
+    paths:
+      - docs/**
+      - mkdocs.yml
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to push the built site to gh-pages branch
+
+concurrency:
+  group: docs-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install MkDocs Material
+        run: pip install mkdocs-material
+      - name: Build site
+        run: mkdocs build --strict
+      - name: Push to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          force_orphan: true
