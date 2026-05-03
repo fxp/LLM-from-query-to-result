@@ -1,0 +1,426 @@
+### probe 2026-05-03 22:47:58
+
+=== GPU ===
+name, memory.total [MiB], driver_version, compute_cap
+NVIDIA GeForce RTX 5090, 32607 MiB, 580.105.08, 12.0
+
+=== nvcc ===
+/usr/local/cuda/bin/nvcc
+Built on Fri_Feb_21_20:23:50_PST_2025
+Cuda compilation tools, release 12.8, V12.8.93
+Build cuda_12.8.r12.8/compiler.35583870_0
+
+=== Python / pre-installed packages ===
+Python 3.12.3
+torch                          2.8.0+cu128
+torchvision                    0.23.0+cu128
+triton                         3.4.0
+
+=== Disk ===
+Filesystem      Size  Used Avail Use% Mounted on
+overlay          30G   53M   30G   1% /
+/dev/md0         50G   12K   50G   1% /root/autodl-tmp
+
+=== Network reachability (5s timeout each) ===
+  github.com                                   FAIL
+  huggingface.co                               FAIL
+  hf-mirror.com                                code=200 time=0.616691s
+  raw.githubusercontent.com                    FAIL
+  openaipublic.blob.core.windows.net           code=400 time=2.254405s
+  pypi.org                                     FAIL
+  mirrors.aliyun.com                           code=301 time=0.313039s
+### clone 2026-05-03 22:48:39
+
+=== check pip config ===
+cat: /root/.pip/pip.conf: No such file or directory
+no pip.conf
+
+=== try gh-proxy clone (main branch) ===
+Cloning into 'LLM-from-query-to-result'...
+
+=== verify ===
+0d5a938 Merge: full from-scratch LLM stack (L0 → L0.5 → L0.6 → L1-L5 + 11-post blog)
+669bea3 feat(L0.6): agent SFT works end-to-end (33s train, ReAct + tools)
+01991bd feat(L0.6): agent SFT layer with calc + lookup tools
+
+=== bundled input.txt present? ===
+-rw-r--r-- 1 root root 1115394 May  3 22:48 00_train/data/input.txt
+40000 00_train/data/input.txt
+
+=== layer dirs ===
+00_train/
+00b_sft/
+00c_agent_sft/
+01_app/
+02_agent/
+03_model/
+04_transformer/
+05_gpu/
+blog/
+docs/
+examples/
+
+real	0m9.136s
+user	0m0.274s
+sys	0m0.087s
+Permission denied, please try again.
+Permission denied, please try again.
+root@connect.westd.seetacloud.com: Permission denied (publickey,password).
+### pip+install 2026-05-03 22:49:22
+=== pip.conf ===
+[global]
+index-url = https://mirrors.aliyun.com/pypi/simple/
+trusted-host = mirrors.aliyun.com
+
+=== pip install ===
+Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=13.8.0->typer->transformers>=4.40->-r requirements.txt (line 6))
+  Downloading https://mirrors.aliyun.com/pypi/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+Installing collected packages: websockets, uvloop, typing-inspection, shellingham, safetensors, regex, python-dotenv, pydantic-core, mdurl, httptools, hf-xet, click, annotated-types, annotated-doc, watchfiles, uvicorn, starlette, pydantic, markdown-it-py, rich, fastapi, typer, huggingface-hub, tokenizers, transformers
+Successfully installed annotated-doc-0.0.4 annotated-types-0.7.0 click-8.3.3 fastapi-0.136.1 hf-xet-1.4.3 httptools-0.7.1 huggingface-hub-1.13.0 markdown-it-py-4.0.0 mdurl-0.1.2 pydantic-2.13.3 pydantic-core-2.46.3 python-dotenv-1.2.2 regex-2026.4.4 rich-15.0.0 safetensors-0.7.0 shellingham-1.5.4 starlette-1.0.0 tokenizers-0.22.2 transformers-5.7.0 typer-0.25.1 typing-inspection-0.4.2 uvicorn-0.46.0 uvloop-0.22.1 watchfiles-1.1.1 websockets-16.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv
+
+=== verify ===
+
+real	0m15.225s
+user	0m11.257s
+sys	0m1.017s
+torch 2.8.0+cu128 cuda True NVIDIA GeForce RTX 5090
+regex 2026.4.4
+transformers 5.7.0
+triton 3.4.0
+### L4 BPE 2026-05-03 22:49:49
+============================================================
+tiktoken not available — skipping equivalence test, just printing samples:
+BPE: downloading https://openaipublic.blob.core.windows.net/gpt-2/encodings/main/encoder.json -> /root/autodl-tmp/LLM-from-query-to-result/04_transformer/data/encoder.json
+BPE: downloading https://openaipublic.blob.core.windows.net/gpt-2/encodings/main/vocab.bpe -> /root/autodl-tmp/LLM-from-query-to-result/04_transformer/data/vocab.bpe
+  'Hello, world!'                             -> [15496, 11, 995, 0]  (4 tokens)
+  'The quick brown fox jumps over the lazy '  -> [464, 2068, 7586, 21831, 18045, 625, 262, 16931]...  (10 tokens)
+  'ROMEO:\nO Juliet, wherefore art thou?'     -> [33676, 4720, 25, 198, 46, 38201, 11, 810]...  (12 tokens)
+  'Question: What is the capital of France?'  -> [24361, 25, 1867, 318, 262, 3139, 286, 4881]...  (12 tokens)
+  '  multiple   spaces   and\ttabs\n\nnewlines'  -> [220, 3294, 220, 220, 9029, 220, 220, 290]...  (15 tokens)
+  '中文 日本語 🚀 emoji'                            -> [40792, 23877, 229, 10545, 245, 98, 17312, 105]...  (14 tokens)
+  '1234567890 + - * / = (test)'               -> [10163, 2231, 30924, 3829, 1343, 532, 1635, 1220]...  (12 tokens)
+encode-decode roundtrip OK on all samples
+
+real	0m57.184s
+user	0m0.250s
+sys	0m0.049s
+### L4 inference 2026-05-03 22:50:54
+  HF Hub direct unreachable; using mirror: https://hf-mirror.com
+  (set HF_HUB_DISABLE_XET=1, HF_HUB_DOWNLOAD_TIMEOUT=60)
+Loading weights:   0%|          | 0/148 [00:00<?, ?it/s]Loading weights: 100%|██████████| 148/148 [00:00<00:00, 10751.65it/s]
+loaded gpt2: 124.44M params  (device=cuda)
+tokens: [464, 3139, 286, 4881, 318]  (5 tokens)
+
+forward pass, one step:
+  x = embed(ids) + pos(ids)          shape=(1, 5, 768)
+  block  0 attn+ffn                   shape=(1, 5, 768)  131.9 ms
+  block  1 attn+ffn                   shape=(1, 5, 768)  0.3 ms
+  block  2 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  3 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  4 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  5 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  6 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  7 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  8 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block  9 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block 10 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  block 11 attn+ffn                   shape=(1, 5, 768)  0.2 ms
+  ln_f                                shape=(1, 5, 768)
+  logits = x @ wte.T                 shape=(1, 5, 50257)
+
+argmax at last pos -> 262  (' the')
+
+
+real	6m39.681s
+user	0m15.429s
+sys	0m5.950s
+### L0 prepare 2026-05-03 22:57:58
+corpus length: 1,115,394 chars
+tokenized:     338,025 BPE tokens  (vocab=50257)
+unique tokens used: 11,706
+
+wrote train.bin:  304,222 tokens  (0.61 MB)
+wrote val.bin:     33,803 tokens  (0.07 MB)
+
+done. now: python train.py
+
+### L0 train 2026-05-03 22:57:59
+
+real	0m1.004s
+user	0m5.947s
+sys	0m0.035s
+step  925 | loss  4.545 | lr 3.46e-05 | 240,746 tok/s |  12.9s
+step  950 | loss  4.478 | lr 3.21e-05 | 383,945 tok/s |  13.1s
+step  975 | loss  4.366 | lr 3.05e-05 | 383,829 tok/s |  13.4s
+
+final | train 4.555  val 5.048  (13.8s total)
+
+saved checkpoint -> /root/autodl-tmp/LLM-from-query-to-result/00_train/out/ckpt.pt  (29.0 MB)
+
+generate samples:  python sample.py 'ROMEO:'
+serve via L3:      MODEL_PATH=00_train/out/ckpt.pt python ../03_model/server.py
+
+real	0m16.581s
+user	0m19.900s
+sys	0m1.103s
+### L0 sample 2026-05-03 22:58:23
+
+KING RICHARD II:
+
+DUKE VINCENTIO:
+O, you so.
+
+ISABETH:
+BRUTIO:
+Come, good go.
+
+
+
+ROMEO:
+My wife, the name as thou, as no law,hip, go
+────────────────────────────────────────────────────────────
+
+### L0.5 path A SFT 2026-05-03 22:58:26
+epoch  99/100 | avg loss  0.020 | lr 3.00e-05 |   26.1s
+
+--- AFTER SFT ---
+  Q: What is the capital of France?
+  A: Paris.
+  Q: What is the capital of Japan?
+  A: Tokyo.
+  Q: What is 2 plus 2?
+  A: 4.
+  Q: Who wrote Hamlet?
+  A: William Shakespeare.
+  Q: How many continents are there?
+  A: Seven.
+  Q: Capital of France?
+  A: Paris.
+  Q: What is the capital of Norway?
+  A: Oslo.
+  Q: What is 100 plus 100?
+  A: 13.
+  Q: What is the capital of Mars?
+  A: Moscow.
+
+saved SFT checkpoint -> /root/autodl-tmp/LLM-from-query-to-result/00b_sft/out/sft.pt  (29.0 MB)
+
+serve via L3:  MODEL_PATH=/root/autodl-tmp/LLM-from-query-to-result/00b_sft/out/sft.pt python ../03_model/server.py
+
+real	0m29.678s
+user	0m33.335s
+sys	0m1.125s
+### L0.5 path B SFT (gpt2 124M) 2026-05-03 23:01:48
+epoch  22/30 | avg loss  0.000 | lr 1.12e-05 |   26.6s
+epoch  24/30 | avg loss  0.000 | lr 8.25e-06 |   29.0s
+epoch  26/30 | avg loss  0.000 | lr 6.20e-06 |   31.6s
+epoch  28/30 | avg loss  0.000 | lr 5.14e-06 |   34.1s
+epoch  29/30 | avg loss  0.000 | lr 5.00e-06 |   35.2s
+
+--- AFTER SFT ---
+  Q: What is the capital of France?
+  A: Paris.
+  Q: What is the capital of Japan?
+  A: Tokyo.
+  Q: What is 2 plus 2?
+  A: 4.
+  Q: Who wrote Hamlet?
+  A: William Shakespeare.
+  Q: What is the capital of Iceland?
+  A: Reykjavík.
+  Q: What is the largest river in Africa?
+  A: The Nile.
+  Q: Who wrote Pride and Prejudice?
+  A: William Shakespeare.
+
+saved SFT checkpoint -> /root/autodl-tmp/LLM-from-query-to-result/00b_sft/out/sft_from_gpt2.pt  (497.8 MB)
+
+serve via L3:  MODEL_PATH=/root/autodl-tmp/LLM-from-query-to-result/00b_sft/out/sft_from_gpt2.pt python ../03_model/server.py
+
+real	0m47.834s
+user	0m48.125s
+sys	0m2.693s
+### L0.6 agent SFT 2026-05-03 23:02:45
+=== tools self-test ===
+  ✓ call('calc(2 + 2)') = '4'  (expected '4')
+  ✓ call('calc(23 + 47)') = '70'  (expected '70')
+  ✓ call('calc(3 * (4 + 5))') = '27'  (expected '27')
+  ✓ call('calc(100 / 4)') = '25'  (expected '25')
+  ✓ call('lookup(capital of France)') = 'Paris'  (expected 'Paris')
+  ✓ call('lookup(capital of Japan)') = 'Tokyo'  (expected 'Tokyo')
+  ✓ call('lookup(does not exist)') = 'not found'  (expected 'not found')
+  ✓ call('calc(import os)') = 'invalid expression'  (expected 'invalid expression')
+  ✓ call('badtool(x)') = "unknown tool 'badtool'"  (expected "unknown tool 'badtool'")
+  ✓ call('not a function') = 'malformed action'  (expected 'malformed action')
+
+=== build agent training data ===
+wrote /root/autodl-tmp/LLM-from-query-to-result/00c_agent_sft/kb.json: 105 entries
+wrote /root/autodl-tmp/LLM-from-query-to-result/00c_agent_sft/data.json: 258 traces  (173 lookup + 85 calc), avg ~96 chars
+
+=== train ===
+epoch   0/20 | avg loss  2.094 | lr 5.00e-05 |    1.2s
+epoch   2/20 | avg loss  0.002 | lr 4.87e-05 |    3.9s
+epoch   4/20 | avg loss  0.001 | lr 4.52e-05 |    6.5s
+epoch   6/20 | avg loss  0.000 | lr 3.97e-05 |    9.2s
+epoch   8/20 | avg loss  0.000 | lr 3.29e-05 |   11.9s
+epoch  10/20 | avg loss  0.000 | lr 2.56e-05 |   14.6s
+epoch  12/20 | avg loss  0.000 | lr 1.85e-05 |   17.1s
+epoch  14/20 | avg loss  0.000 | lr 1.23e-05 |   19.7s
+epoch  16/20 | avg loss  0.000 | lr 7.74e-06 |   22.2s
+epoch  18/20 | avg loss  0.000 | lr 5.32e-06 |   24.8s
+epoch  19/20 | avg loss  0.000 | lr 5.00e-06 |   26.1s
+
+--- AFTER agent SFT ---
+  Q: What is the capital of France?
+  →  ' I should look up capital of France.\nACTION: lookup(capital of France)\nOBSERVATION: The capital of France.'
+  Q: What is 17 plus 25?
+  →  ' I need to compute 17 + 25.\nACTION: calc(17 + 25)\nOBSERVATION: 17 + 25.'
+  Q: Who wrote Hamlet?
+  →  ' I should look up author of Hamlet.\nACTION: lookup(author of Hamlet)\nOBSERVATION: Hamlet.'
+  Q: What is 8 times 7?
+  →  ' I need to compute 8 * 7.\nACTION: calc(8 * 7)\nOBSERVATION: calc(8 * 7)\nANSWER: calc(8 * 7)\nANSWER: calc(8 * 7)'
+
+saved agent checkpoint -> /root/autodl-tmp/LLM-from-query-to-result/00c_agent_sft/out/agent.pt  (497.8 MB)
+
+run agent loop:  cd ../02_agent && AGENT_MODE=1 python agent.py 'What is the capital of France?'
+
+real	0m31.879s
+user	0m34.457s
+sys	0m1.925s
+### agent E2E 2026-05-03 23:03:32
+L3 ready in 1s
+
+=== agent loop on diverse queries (greedy, server with agent.pt) ===
+----------------------------------------
+Q: What is the capital of France?
+
+💭 I should look up capital of France.
+🔧 lookup(capital of France)
+   ↳ Paris
+Paris.
+
+[done]
+----------------------------------------
+Q: What is 23 plus 47?
+
+💭 I need to compute 23 + 47.
+🔧 calc(23 + 47)
+   ↳ 70
+70.
+
+[done]
+----------------------------------------
+Q: What is 1234 plus 5678?
+
+💭 I need to compute 1234 + 5678.
+🔧 calc(1234 + 5678)
+   ↳ 6912
+6912.
+
+[done]
+----------------------------------------
+Q: Who wrote Hamlet?
+
+💭 I should look up author of Hamlet.
+🔧 lookup(author of Hamlet)
+   ↳ Shakespeare
+Shakespeare.
+
+[done]
+----------------------------------------
+Q: What is 8 times 7?
+
+💭 I need to compute 8 * 7.
+🔧 calc(8 * 7)
+   ↳ 56
+56.
+
+[done]
+----------------------------------------
+Q: What is the chemical symbol of gold?
+
+💭 I should look up chemical symbol of gold.
+🔧 lookup(chemical symbol of gold)
+   ↳ Au
+Au.
+
+[done]
+----------------------------------------
+Q: What is the speed of light?
+
+💭 I should look up speed of light.
+🔧 lookup(speed of light)
+   ↳ 300000 km/s
+300000 km/s.
+
+[done]
+----------------------------------------
+Q: What is the longest river in Africa?
+
+💭 I should look up longest river in Africa.
+🔧 lookup(longest river in Africa)
+   ↳ Nile
+The Nile.
+
+[done]
+----------------------------------------
+Q: What is the capital of Mongolia?
+
+💭 I should look up capital of Mongolia.
+🔧 lookup(capital of Mongolia)
+   ↳ not found
+not found.
+
+[done]
+----------------------------------------
+Q: How are you today?
+
+💭 I should look up author of this article.
+🔧 lookup(author of this article)
+   ↳ not found
+not found.
+
+[done]
+### L5 GPU benchmarks 2026-05-03 23:03:59
+=== detect compute capability ===
+12.0
+
+=== build CUDA matmuls (sm_120 for Blackwell 5090) ===
+-rwxr-xr-x 1 root root 1014656 May  3 23:04 matmul_naive
+-rwxr-xr-x 1 root root 1010560 May  3 23:04 matmul_tiled
+
+=== matmul_naive ===
+naive matmul 2048x2048x2048: 2.38 ms, 7.21 TFLOPS
+=== matmul_tiled ===
+tiled matmul 2048x2048x2048 (TILE=32): 1.84 ms, 9.33 TFLOPS
+
+=== Triton + cuBLAS benchmark ===
+torch @ (cuBLAS)  2048x2048x2048: 0.25 ms, 69.5 TFLOPS
+unfused pytorch  B=4 H=16 T=1024 D=64: 1.01 ms
+triton fused     B=4 H=16 T=1024 D=64: 0.12 ms
+### Web SSE E2E 2026-05-03 23:04:20
+L1 ready
+
+=== full agent through web SSE ===
+----------------------------------------
+Q: What is the capital of France?
+💭 I should look up capital of France.
+🔧 lookup(capital of France)
+   ↳ Paris
+Paris.
+[done]
+----------------------------------------
+Q: What is 1234 plus 5678?
+💭 I need to compute 1234 + 5678.
+🔧 calc(1234 + 5678)
+   ↳ 6912
+6912.
+[done]
+----------------------------------------
+Q: What is the chemical symbol of gold?
+💭 I should look up chemical symbol of gold.
+🔧 lookup(chemical symbol of gold)
+   ↳ Au
+Au.
+[done]
