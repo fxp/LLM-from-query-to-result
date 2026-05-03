@@ -241,7 +241,7 @@ class GPT(nn.Module):
 
         cfg = GPTConfig()  # defaults are gpt2 small
         model = cls(cfg)
-        hf = GPT2LMHeadModel.from_pretrained(name)
+        hf = _hf_load_with_mirror_fallback(name, GPT2LMHeadModel.from_pretrained)
         sd_hf = hf.state_dict()
         sd = model.state_dict()
 
@@ -260,3 +260,40 @@ class GPT(nn.Module):
             with torch.no_grad():
                 sd[k].copy_(v)
         return model
+
+
+# ---------------------------------------------------------------------------
+# HuggingFace mirror auto-fallback. Some regions (e.g. CN) can't reach
+# huggingface.co directly. If the user hasn't already set HF_ENDPOINT, we
+# try the default once; on any network-shaped failure, we silently retry
+# against `https://hf-mirror.com` (community-maintained CN mirror).
+# ---------------------------------------------------------------------------
+HF_MIRROR = "https://hf-mirror.com"
+_NETWORK_HINTS = (
+    "connection", "timed out", "timeout", "name resolution",
+    "unable to load", "client has been closed", "max retries",
+    "could not reach", "newconnectionerror",
+)
+
+
+def _hf_load_with_mirror_fallback(name, loader):
+    """Call loader(name); on network failure retry via HF mirror.
+
+    `loader` is e.g. `GPT2LMHeadModel.from_pretrained`. The retry sets
+    `HF_ENDPOINT` in os.environ — huggingface_hub re-reads this per call,
+    so subsequent loads in the same process pick it up automatically.
+    """
+    import os
+    if os.environ.get("HF_ENDPOINT"):
+        # User explicitly chose an endpoint; respect it.
+        return loader(name)
+    try:
+        return loader(name)
+    except Exception as exc:
+        msg = (str(exc) + " " + repr(exc)).lower()
+        if not any(h in msg for h in _NETWORK_HINTS):
+            raise  # not a network problem — surface the original error
+        print(f"  HF Hub direct connection failed ({type(exc).__name__}); "
+              f"retrying via mirror: {HF_MIRROR}")
+        os.environ["HF_ENDPOINT"] = HF_MIRROR
+        return loader(name)
