@@ -10,8 +10,9 @@ empty server → web-served agent answering "1234+5678 → 6912":
 
 ## What's in here
 
-- `*.md` — structured report with timing, observations, blog-ready commentary
-- `*.raw.log` — exact stdout/stderr captured during the run, useful for debugging or re-derived numbers
+- `EXPERIMENT_REPORT.md` — 正式实验报告（约 6500 字）。HTML 版本：[`web/report.html`](../web/report.html)
+- `*-report.md` — structured cold-start log with timing, observations, blog-ready commentary
+- `*-raw.log` — exact stdout/stderr captured during the run, useful for debugging or re-derived numbers
 
 These are a starting point for the project's blog/report writing — every
 number cited in a post can trace back to an actual recorded run here.

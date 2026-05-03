@@ -1,4 +1,11 @@
-# Web Landing Page
+# Web Pages
+
+两个独立的、自包含的 HTML 页面：
+
+- **`index.html`** — 项目落地页（hero + demo + 8 层架构 + 关键数字）
+- **`report.html`** — 完整实验报告（学术风排版，TOC + 表格 + callouts）
+
+两个文件都是单文件 inline CSS、自动 light/dark mode、移动端适配，不需要任何 build 步骤。
 
 `index.html` 是一个独立的、自包含的 HTML 落地页，用来给项目做"门面"。
 

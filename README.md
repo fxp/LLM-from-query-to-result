@@ -190,8 +190,9 @@ cd 05_gpu    && python benchmark.py                    # 需要 NVIDIA GPU
 
 | 形式 | 链接 | 长度 / 风格 |
 |---|---|---|
-| 🌐 **Web 落地页** | [`web/index.html`](./web/index.html) | 单页 HTML，自包含，可部署到 GitHub Pages |
-| 📊 **正式实验报告** | [`reports/EXPERIMENT_REPORT.md`](./reports/EXPERIMENT_REPORT.md) | ~6500 字，方法/结果/讨论/可复现 |
+| 🌐 **Web 落地页** | [`web/index.html`](./web/index.html) | 单页 HTML，hero + demo + 架构图 |
+| 📑 **实验报告（Web）** | [`web/report.html`](./web/report.html) | 学术风 HTML，TOC + 表格 + 引用 |
+| 📊 **实验报告（Markdown）** | [`reports/EXPERIMENT_REPORT.md`](./reports/EXPERIMENT_REPORT.md) | ~6500 字，方法/结果/讨论/可复现 |
 | 📚 **单篇浓缩 Blog** | [`blog/article.md`](./blog/article.md) | ~5500 字，故事化叙述 |
 | 📖 **11 篇分章 Blog** | [`blog/`](./blog) | ~30K 字，每层一篇 |
 | 🧪 **冷启动实测日志** | [`reports/`](./reports) | 三次独立 cold-start 的原始 stdout |
