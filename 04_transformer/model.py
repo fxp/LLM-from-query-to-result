@@ -272,8 +272,25 @@ HF_MIRROR = "https://hf-mirror.com"
 _NETWORK_HINTS = (
     "connection", "timed out", "timeout", "name resolution",
     "unable to load", "client has been closed", "max retries",
-    "could not reach", "newconnectionerror",
+    "could not reach", "newconnectionerror", "huggingface.co",
+    "can't load the configuration", "make sure",
 )
+
+
+def _looks_like_network_error(exc: BaseException) -> bool:
+    """Walk the exception chain (cause + context) and look for network-shaped
+    text in any layer. transformers wraps the underlying httpx error in an
+    OSError whose own message doesn't say 'connection' — but the original
+    cause does."""
+    seen = set()
+    cur: BaseException | None = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        msg = (str(cur) + " " + repr(cur)).lower()
+        if any(h in msg for h in _NETWORK_HINTS):
+            return True
+        cur = cur.__cause__ or cur.__context__
+    return False
 
 
 def _hf_load_with_mirror_fallback(name, loader):
@@ -290,9 +307,8 @@ def _hf_load_with_mirror_fallback(name, loader):
     try:
         return loader(name)
     except Exception as exc:
-        msg = (str(exc) + " " + repr(exc)).lower()
-        if not any(h in msg for h in _NETWORK_HINTS):
-            raise  # not a network problem — surface the original error
+        if not _looks_like_network_error(exc):
+            raise
         print(f"  HF Hub direct connection failed ({type(exc).__name__}); "
               f"retrying via mirror: {HF_MIRROR}")
         os.environ["HF_ENDPOINT"] = HF_MIRROR
