@@ -18,8 +18,16 @@
 - ✅ Instruct 微调（L0.5，~140 行 SFT 在自己 base model 上跑 28 秒，把 base 的"接龙莎翁"变成"答 'Paris.'"）
 - ✅ Chat 客户端（L2，纯 urllib HTTP）
 - ✅ Web UI（L1，纯 HTML + fetch streaming）
+- ✅ GPU kernels（L5，手写 CUDA matmul + Triton flash-attention，[实测见 05_gpu/README.md](./05_gpu/README.md#实测样例)）
 
 **唯一的"借"**：PyTorch 的 tensor / autograd（这是底座，不重写），可选下载 OpenAI 公开的 GPT-2 124M 权重（仅 fallback，默认走我们自训的 model）。
+
+> **GPU 实测验证 (RTX 5090, 2026-05)**：
+> - L0 训练 1000 步：12.2 秒（CPU 6 分钟，60×加速）
+> - L0.5 SFT on 124M base：30 epochs / 33.9 秒，loss 1.6 → 0.0
+> - 推理：prefill 1.8 ms / decode 2.6 ms/token (124M, batch=1, fp32)
+> - L5 matmul 2048³：tiled 9.2 / cuBLAS 68.9 TFLOPS（cuBLAS 用 Tensor Core）
+> - L5 attention：Triton flash-attn 比 unfused PyTorch **快 8.5×**
 
 ## 贯穿全 repo 的例子
 

@@ -2,6 +2,8 @@
 
 **一句话**：拿 L0 训出的 base model（学会"续写英文"），在 ~242 条手写 Q/A 上微调几分钟，让它学会"看到问题就回答"的 instruction 格式。
 
+源码：[`00b_sft/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/00b_sft)
+
 ## 这一层为什么存在
 
 L0 的 base model 学会的是**续写 next token**。给它 "What is the capital of France?" 它会接着写莎士比亚式的台词——因为它见过的所有训练 token 都来自莎翁的剧本。它不知道"问"和"答"是两件事。

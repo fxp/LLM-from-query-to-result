@@ -82,16 +82,29 @@ pip install triton
 python benchmark.py
 ```
 
-样例输出（A100）：
+### 实测样例
+
+**RTX 5090 (Blackwell, sm_120, 32 GB HBM)** — 用 `nvcc -arch=sm_120` 编译：
+
 ```
 matmul 2048×2048×2048, fp32:
-  naive CUDA      :    1.8 TFLOPS
-  tiled CUDA      :   11.2 TFLOPS
-  cuBLAS (torch)  :  240.3 TFLOPS
-attention  B=4 H=16 T=1024 D=64, fp16:
-  pytorch 三段式  :   2.1 ms   (writes a [4,16,1024,1024] tensor to HBM)
-  triton fused    :   0.6 ms   (never materializes it)
+  naive CUDA      :   2.39 ms,  7.19 TFLOPS    1.0×
+  tiled CUDA      :   1.86 ms,  9.24 TFLOPS    1.3×  (tiling 在 5090 上收益小:
+                                                      HBM 极快，naive 已经不太被
+                                                      memory-bound 卡住)
+  cuBLAS (torch)  :   0.25 ms, 68.94 TFLOPS    9.6×  (Tensor Core + TF32)
+
+attention  B=4 H=16 T=1024 D=64, fp32:
+  pytorch 三段式  :   1.02 ms              1.0×
+  triton fused    :   0.12 ms              8.5×    (省掉中间 [4,16,1024,1024]
+                                                    attention matrix 的 HBM 读写)
 ```
+
+参考：A100 上 cuBLAS 大约 240 TFLOPS、tiled 11 TFLOPS、naive 1.8 TFLOPS。
+不同 GPU 间的相对差异主要看 (a) HBM 带宽 (b) Tensor Core 代际。
+关键观察：`tiled / naive` 在 A100 上 ~6×，在 5090 上只有 1.3×——5090 的 HBM
+快到 naive 不再 memory-bound。但 `cuBLAS / tiled` 永远是 7-25× 因为 Tensor Core
+吃的是 fp16/bf16/tf32 而不是 fp32。
 
 ## 和其他层的接口
 

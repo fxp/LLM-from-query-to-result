@@ -42,6 +42,7 @@ theme:
 nav:
   - 首页: index.md
   - L0 · 训练层: 00-train.md
+  - L0.5 · SFT 层: 00b-sft.md
   - L1 · App 层: 01-app.md
   - L2 · Agent 层: 02-agent.md
   - L3 · Model 层: 03-model.md
