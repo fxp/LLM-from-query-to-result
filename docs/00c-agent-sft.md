@@ -36,7 +36,7 @@ OBSERVATION:                            LEARN  ← 关键！这是 model 的"我
 ANSWER: <final> <EOT>                   LEARN
 ```
 
-**为什么 `OBSERVATION:` 这 prefix 必须 LEARN**：因为这是 model 主动告诉 agent loop "我等工具结果" 的 stop 信号。如果 mask 了，模型不会 emit 它，会一直循环 emit 更多 ACTION。我第一版就这么错了——见 [`blog/10-L0.6-agent.md`](../blog/10-L0.6-agent.md)。
+**为什么 `OBSERVATION:` 这 prefix 必须 LEARN**：因为这是 model 主动告诉 agent loop "我等工具结果" 的 stop 信号。如果 mask 了，模型不会 emit 它，会一直循环 emit 更多 ACTION。我第一版就这么错了——见 [`blog/10-L0.6-agent.md`](blog/10-L0.6-agent.md)。
 
 ## 工具
 
@@ -49,7 +49,7 @@ lookup("capital of France")  # → "Paris"
 lookup("author of Hamlet")   # → "Shakespeare"
 ```
 
-`calc` 是 sandboxed `eval`（regex 限定为 `[\d+\-*/().\s]+`，没 builtins）。`lookup` 查 `kb.json`（105 条事实，从 [00b_sft/data.json](../00b_sft/data.json) 整理而来）。
+`calc` 是 sandboxed `eval`（regex 限定为 `[\d+\-*/().\s]+`，没 builtins）。`lookup` 查 `kb.json`（105 条事实，从 [`00b_sft/data.json`](https://github.com/fxp/LLM-from-query-to-result/blob/main/00b_sft/data.json) 整理而来）。
 
 ## 数据生成（程序合成）
 

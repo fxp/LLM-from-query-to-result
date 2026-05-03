@@ -8,7 +8,7 @@
 
 这个站点把整条链路切成 7 层，**每一层都有独立的讲解和最小可运行代码**。你可以单独跑任意一层，也可以把它们串起来看完整 trace。**整条链路零外部 LLM API、零外部 model 权重**——L0 在莎士比亚语料上从随机初始化训出 7M 参数的 GPT，L0.5 SFT 后让它能听问答，L3 加载它，L1/L2 把 token 流式回浏览器。
 
-> **GPU 实测验证 (RTX 5090, 2026-05)**：L0 训练 12 秒、L0.5 SFT on 124M 33.9 秒、L5 Triton flash-attn 比 PyTorch 快 8.5×。详见 [L5 实测样例](05-gpu.md#实测样例)、[L0.5 RTX 5090 实测](00-train.md)。
+> **GPU 实测验证 (RTX 5090, 2026-05)**：L0 训练 12 秒、L0.5 SFT on 124M 33.9 秒、L5 Triton flash-attn 比 PyTorch 快 8.5×。详见 [L5 GPU 层](05-gpu.md)、[L0 训练实测](00-train.md)。
 
 ## 贯穿全 repo 的例子
 
