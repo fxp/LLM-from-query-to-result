@@ -237,11 +237,16 @@ class GPT(nn.Module):
     # ------------------------------------------------------------------
     @classmethod
     def from_pretrained(cls, name: str = "gpt2") -> "GPT":
+        # CRITICAL: set HF_ENDPOINT BEFORE importing transformers.
+        # huggingface_hub.constants.ENDPOINT is captured at import time
+        # via os.getenv("HF_ENDPOINT", ...), so setting it later in env
+        # is too late — the constant is already frozen.
+        _probe_and_set_hf_endpoint()
         from transformers import GPT2LMHeadModel
 
         cfg = GPTConfig()  # defaults are gpt2 small
         model = cls(cfg)
-        hf = _hf_load_with_mirror_fallback(name, GPT2LMHeadModel.from_pretrained)
+        hf = GPT2LMHeadModel.from_pretrained(name)
         sd_hf = hf.state_dict()
         sd = model.state_dict()
 
@@ -265,28 +270,29 @@ class GPT(nn.Module):
 # ---------------------------------------------------------------------------
 # HuggingFace mirror auto-fallback. Some regions (e.g. CN) can't reach
 # huggingface.co directly. If the user hasn't already set HF_ENDPOINT, we
-# probe huggingface.co first; on connection failure, set HF_ENDPOINT to
-# `https://hf-mirror.com` (community-maintained CN mirror) BEFORE the
-# transformers library opens its httpx session. (We can't fix it after
-# the fact: huggingface_hub caches a global httpx client, and once that
-# client errors out it stays "closed" for the rest of the process.)
+# probe huggingface.co; on failure, set HF_ENDPOINT to
+# `https://hf-mirror.com` (community-maintained CN mirror).
+#
+# CRITICAL — must run BEFORE `import transformers` / `import huggingface_hub`.
+# Those modules read os.getenv("HF_ENDPOINT", "https://huggingface.co") at
+# import time, into a module-level constant. After that the env var is dead
+# weight: huggingface_hub uses the captured constant, not os.environ.
 # ---------------------------------------------------------------------------
 HF_MIRROR = "https://hf-mirror.com"
 
 
 def _probe_and_set_hf_endpoint() -> None:
     """If HF_ENDPOINT isn't already set, probe huggingface.co; on failure,
-    set HF_ENDPOINT to the mirror. Idempotent: if the env var is set when
-    we enter, do nothing."""
+    set HF_ENDPOINT to the mirror. Idempotent + cheap (~0-3 sec)."""
     import os
     if os.environ.get("HF_ENDPOINT"):
-        return
+        return  # user explicitly chose; respect it
     import socket
     import urllib.error
     import urllib.request
     try:
-        # 3-second probe of an HF API endpoint that's small + always reachable
-        # if the host is reachable. We don't follow redirects or download body.
+        # 3-second probe of a tiny HF endpoint. We don't follow redirects
+        # or download body — just verify the TCP+TLS handshake works.
         req = urllib.request.Request(
             "https://huggingface.co/api/models/openai-community/gpt2",
             headers={"User-Agent": "Mozilla/5.0 (LLM-from-query-to-result)"},
@@ -295,16 +301,3 @@ def _probe_and_set_hf_endpoint() -> None:
     except (urllib.error.URLError, socket.timeout, OSError):
         os.environ["HF_ENDPOINT"] = HF_MIRROR
         print(f"  HF Hub direct unreachable; using mirror: {HF_MIRROR}")
-
-
-def _hf_load_with_mirror_fallback(name, loader):
-    """Probe-and-set HF_ENDPOINT first, then call loader(name).
-
-    `loader` is e.g. `GPT2LMHeadModel.from_pretrained`. We do the probe
-    BEFORE the first transformers call so huggingface_hub opens its
-    httpx client against the right endpoint from the start. Catching the
-    failure post-facto doesn't work — the cached client gets stuck in
-    'closed' state.
-    """
-    _probe_and_set_hf_endpoint()
-    return loader(name)
