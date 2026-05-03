@@ -107,7 +107,21 @@ pip install -r requirements.txt
 # L5 的 Triton/CUDA 部分需要 NVIDIA GPU；没 GPU 可跳过。
 ```
 
-> **网络受限地区（如中国大陆）**：HF Hub 直连不通时 `GPT.from_pretrained("gpt2")` 会**自动 probe + fallback** 到 `https://hf-mirror.com`，控制台会打印 `HF Hub direct unreachable; using mirror: ...`。如果你想用别的 endpoint，预先 `export HF_ENDPOINT=...` 即可（已设的就跳过 probe）。BPE 文件来自 `openaipublic.blob.core.windows.net`，Tiny Shakespeare 来自 GitHub raw——这两个一般可直连。
+> **网络受限地区（如中国大陆）的运行清单**：
+>
+> 1. **`git clone`** github.com 直连超时——用 mirror 前缀：
+>    ```bash
+>    git clone https://gh-proxy.com/https://github.com/fxp/LLM-from-query-to-result.git
+>    ```
+> 2. **`pip install`** 默认走 PyPI，CN 区一般 ok（或自己配 aliyun/tsinghua mirror）。
+> 3. **HF Hub** (`GPT.from_pretrained("gpt2")`) 直连不通时**自动 probe + fallback** 到 `https://hf-mirror.com`，并设 `HF_HUB_DISABLE_XET=1` 绕开慢的 Xet CDN。控制台会打印：
+>    ```
+>    HF Hub direct unreachable; using mirror: https://hf-mirror.com
+>    (set HF_HUB_DISABLE_XET=1, HF_HUB_DOWNLOAD_TIMEOUT=60)
+>    ```
+>    手动指定 endpoint：`export HF_ENDPOINT=...`（已设的会跳过 probe）。
+> 4. **BPE vocab** (`encoder.json` + `vocab.bpe`) 来自 `openaipublic.blob.core.windows.net`——CN 区可直连。
+> 5. **Tiny Shakespeare** 已 bundle 在 `00_train/data/input.txt`，**完全无需下载**。
 
 ### 完全 from-scratch（推荐先做这一遍）
 

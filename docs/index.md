@@ -87,8 +87,11 @@ pip install -r requirements.txt
 # L5 的 Triton/CUDA 部分需要 NVIDIA GPU；没 GPU 可跳过。
 ```
 
-!!! tip "网络受限地区"
-    HF Hub 直连不通时 `GPT.from_pretrained("gpt2")` 会**自动 probe + fallback** 到 `https://hf-mirror.com`。如果想用别的 endpoint，预先 `export HF_ENDPOINT=...` 即可。
+!!! tip "网络受限地区（如中国大陆）"
+    1. `git clone` 走 mirror：`git clone https://gh-proxy.com/https://github.com/...`
+    2. HF Hub 直连不通时 `GPT.from_pretrained("gpt2")` **自动 probe + fallback** 到 `https://hf-mirror.com`，并设 `HF_HUB_DISABLE_XET=1` 绕开慢的 Xet CDN。控制台会打印 `HF Hub direct unreachable; using mirror: ...`
+    3. Tiny Shakespeare 已 bundle 在 `00_train/data/input.txt`，无需下载。
+    4. BPE vocab 来自 `openaipublic.blob.core.windows.net`，CN 区一般可直连。
 
 ### 完全 from-scratch（推荐先做这一遍）
 
