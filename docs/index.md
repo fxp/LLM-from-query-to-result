@@ -87,6 +87,12 @@ pip install -r requirements.txt
 # L5 的 Triton/CUDA 部分需要 NVIDIA GPU；没 GPU 可跳过。
 ```
 
+!!! tip "网络受限地区"
+    HuggingFace Hub 直连可能失败时，export 一下 mirror：
+    ```bash
+    export HF_ENDPOINT=https://hf-mirror.com
+    ```
+
 ### 完全 from-scratch（推荐先做这一遍）
 
 ```bash
