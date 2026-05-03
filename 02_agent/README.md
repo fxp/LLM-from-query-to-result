@@ -1,73 +1,78 @@
-# L2 · Agent 层
+# L2 · Agent / Chat 客户端层
 
-**一句话**：把用户的一句话，变成一串"调工具 → 看结果 → 再想 → 再调"的循环，直到任务完成。
+**一句话**：把用户的一句话变成 prompt，通过 HTTP 流式问 L3，把吐回来的 token 一个个抛给上层。
 
-## 为什么需要 Agent
+## 这一层为什么存在
 
-L3 的模型本质上只能做一件事：**给它一段文本，它 predict 下一个 token**。它不能自己读文件、写文件、调 API。
+L4 实现了 transformer，L3 把它包成一个能接受 prompt 的 HTTP 服务。但用户不会直接发 `POST /generate` JSON——他在浏览器里输入 "巴黎在哪"。中间需要一层做：
 
-那 ChatGPT 是怎么"帮我做了个 Todo 网站"的？答案是**在模型外面套一个循环**：
+1. **prompt framing**：base LM（GPT-2）没有 `user` / `assistant` 概念，只能续写文本。要把"巴黎在哪"包装成 `Question: 巴黎在哪\nAnswer:` 这种形式，让模型从语料里学到的"问答"模式接续下去。
+2. **streaming relay**：把 L3 的 SSE 帧解析成结构化事件，给 L1 用。
+3. **失败兜底**：L3 挂了的话，给 L1 一个清晰的错误。
 
-```
-  ┌──────────────────────────────────────┐
-  │                                      │
-  │  1. 把"用户问题 + 已有对话"送进模型  │
-  │  2. 模型输出：要么是文字（讲给用户） │
-  │              要么是"调用某个工具"    │
-  │  3. 如果是工具调用：执行它，把结果  │
-  │     append 回对话                    │
-  │  4. 回到 1                           │
-  │                                      │
-  └──────────────────────────────────────┘
-              ↑ 这就是 Agent
-```
+`agent.py` 就这点东西，~80 行。
 
-这个循环是 **L2 唯一做的事**。工具本身（写文件、跑 shell）可以很简单——难的是让模型在"该调工具"时调、"该停"时停。现代 LLM（Claude / GPT）原生支持 **tool use**：在 system prompt 里告诉它工具的 JSON schema，它会返回结构化的 `tool_use` 块，我们执行完把 `tool_result` 塞回去。
+## 为什么不是 "Agent"
+
+最初的设计想做完整的 Plan → Act → Observe 循环（用 `write_file` / `run_shell` 真造一个 Todo 网站）。但这个 repo 的招牌是 "LLM from scratch"——L4 自己实现 GPT-2 small (124M, 2019)。GPT-2 做不了 agent：
+
+- 它是 base LM，没有 instruction tuning，不会输出结构化的 `tool_use` JSON
+- 即使硬解析，它也写不出能跑的网站
+
+所以这里诚实地退回到"chat completion"——只演示**chat 客户端怎么和推理服务对话**。完整的 agentic 循环需要换一个能 tool-use 的 instruct 模型（Qwen-2.5-Coder、Llama-3.1-Instruct 等），那是另一个练习。
 
 ## 目录
 
 ```
 02_agent/
-├── agent.py        # Plan-Act-Observe 循环，~120 行
-├── tools.py        # write_file / run_shell 两个工具实现，~60 行
+├── agent.py        # 流式 chat 客户端，~90 行
 └── README.md
 ```
 
 ## 怎么跑
 
+先在另一个终端起 L3：
+
 ```bash
-export ANTHROPIC_API_KEY=sk-...
-python agent.py "帮我做一个 Todo 网站"
+cd 03_model && python server.py
 ```
 
-你会看到类似：
+然后：
 
-```
-[assistant] 好的，我帮你做一个 Todo 网站。我会写一个 index.html 加一个 Flask 后端...
-[tool_use] write_file(path="index.html", content_preview="<!doctype html>...")
-[tool_result] wrote 2134 bytes to generated/index.html
-[tool_use] write_file(path="server.py", content_preview="from flask import Flask...")
-[tool_result] wrote 612 bytes to generated/server.py
-[tool_use] run_shell(cmd="pip install flask")
-[tool_result] exit 0, 1.2s
-[assistant] 完成。打开 generated/index.html 就能用了。
+```bash
+cd 02_agent && python agent.py "What is the capital of France?"
 ```
 
-然后 `generated/` 下会有 Todo 网站的文件。
+输出：
+
+```
+[L2] prompt: 'Question: What is the capital of France?\nAnswer:'
+[L2] streaming from http://localhost:9000/generate ...
+
+ The capital is the capital of France.
+Zachary N. Egbert: ...
+
+[done]
+```
+
+GPT-2 124M 答得很差是正常的——这台模型 2019 年发布，没经过 RLHF/SFT。重点不是答案多好，是**这条链路里没有任何外部 API**：每个 token 都是 L4 的 GPT-2 forward pass 在 L5 的 matmul 上算出来的。
+
+## 配置（环境变量）
+
+| 变量 | 默认 | 说明 |
+|---|---|---|
+| `L3_URL` | `http://localhost:9000/generate` | L3 推理端点 |
+| `L2_MAX_TOKENS` | `64` | 最多生成多少 token |
+| `L2_TEMPERATURE` | `0.8` | 0 = greedy argmax；越大越随机 |
 
 ## 和其他层的接口
 
-- **往上（L1 App）**：`run_agent(query) -> Iterator[Event]`。L1 把事件流式传给浏览器。
-- **往下（L3 Model）**：每个循环迭代调用一次 `client.messages.create(...)`。这个调用就是"往 L3 发一个 HTTP 请求，让它跑一次 transformer forward，把 token stream 回来"。
+- **往上（L1 App）**：`run_agent(query) -> Iterator[Event]`，事件类型 `token / done / error`。
+- **往下（L3 Model）**：一个 `POST /generate` SSE 请求。这个 HTTP 调用就是"让 L3 跑一次 transformer forward，把 token stream 回来"。
 
 ## 这一层的"最小"在哪里
 
-- 只有 2 个工具（`write_file`、`run_shell`）。真实 Agent（Claude Code、Cursor）有十几个工具（Read、Edit、Grep、Bash、WebFetch…），但循环结构完全相同。
-- 没有 planning 独立步骤：现代 LLM 直接在思考中规划，不需要单独一个 "planner"。
-- 没有长期记忆 / RAG / subagents。这些都是在这个最小循环上加层。
-
-## 自己做一个 Agent，最容易踩的坑
-
-1. **停不下来**：模型一直 tool_use 不肯 text-reply。解法：在 system prompt 里明确告知"任务完成后直接回复总结，不要再 tool_use"，以及设一个 `max_iterations` 兜底。
-2. **写进错误的路径**：把工具限制在一个 `work_dir` 里，拼路径前 `Path.resolve()` 校验。本 demo 里 `tools.py::_safe_path` 干这件事。
-3. **shell 命令阻塞**：别忘了超时。
+- **没有对话历史**：每次 `run_agent` 都是一次 one-shot。要做多轮，把历史拼到 prompt 里就行（L3 会重新 prefill；要省钱就上 prefix cache，那是 L3 的活）。
+- **没有 tool use**：见上面"为什么不是 Agent"。
+- **没有 chat template**：base GPT-2 不需要。换 instruct 模型时要在 `build_prompt` 里加上 `<|im_start|>` / `[INST]` 这类 token。
+- **没有重试 / 限流 / 指标**：production agent 需要这些；本 demo 故意省掉，让"streaming chat client 的本质"露出来。

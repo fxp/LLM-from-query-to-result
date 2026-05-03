@@ -7,7 +7,7 @@
     body { font: 14px/1.5 -apple-system, sans-serif; max-width: 760px; margin: 40px auto; padding: 0 16px; color: #222; }
     h1 { font-size: 18px; }
     #log { border: 1px solid #ddd; border-radius: 8px; padding: 16px; min-height: 240px; white-space: pre-wrap; background: #fafafa; }
-    .tool { color: #0a7; font-family: ui-monospace, monospace; margin: 4px 0; }
+    .done { color: #0a7; font-family: ui-monospace, monospace; margin: 4px 0; }
     .err  { color: #c33; }
     form { display: flex; gap: 8px; margin-top: 16px; }
     input[type=text] { flex: 1; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font: inherit; }
@@ -18,7 +18,7 @@
 </head>
 <body>
   <h1>LLM-from-query-to-result · L1 App 层</h1>
-  <p><small>试试输入：<code>帮我做一个 Todo 网站</code></small></p>
+  <p><small>每个 token 都是本地 GPT-2 (L4) 在 L5 上 forward 出来的——零外部 LLM API。试试：<code>What is the capital of France?</code></small></p>
   <div id="log"></div>
   <form id="f">
     <input type="text" id="q" placeholder="说点什么…" autocomplete="off" />
@@ -65,20 +65,10 @@ document.getElementById('f').addEventListener('submit', async (e) => {
 function render(ev) {
   if (ev.type === 'token') {
     log.append(ev.v);
-  } else if (ev.type === 'tool') {
-    const el = document.createElement('div');
-    el.className = 'tool';
-    el.textContent = `🔧 ${ev.name}(${ev.summary || ''})`;
-    log.appendChild(el);
-  } else if (ev.type === 'tool_result') {
-    const el = document.createElement('div');
-    el.className = 'tool';
-    el.textContent = `   ↳ ${ev.summary}`;
-    log.appendChild(el);
   } else if (ev.type === 'done') {
     const el = document.createElement('div');
-    el.className = 'tool';
-    el.textContent = `✓ done · 生成物在 generated/`;
+    el.className = 'done';
+    el.textContent = `✓ done`;
     log.appendChild(el);
   } else if (ev.type === 'error') {
     const el = document.createElement('div');

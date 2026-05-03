@@ -1,126 +1,106 @@
-"""L2 Agent: Plan → Act → Observe loop, backed by Claude's tool use API.
+"""L2 Agent: a thin streaming client to the L3 inference server.
 
-This file is deliberately small — all the intelligence lives inside the
-model call. The loop does only three things:
+Why no LLM API call? This whole repo is "LLM from scratch". L4 implements
+GPT-2 by hand; L3 hosts it as an HTTP service. So L2 here just does what a
+real chat client does: build a prompt, stream tokens back. No external
+provider, no tool use — every token you see was produced by the GPT-2
+forward pass in L4 running on top of L5's matmul.
 
-    1. Send the running conversation to the model.
-    2. If the model returned tool_use blocks, execute them and append
-       the results as a user turn.
-    3. If the model returned only text (no tool_use), we're done.
+Trade-off this makes explicit: GPT-2 small (124M, 2019) is too weak to act
+as a coding agent. It can't reliably emit tool_use JSON, and even if it
+could, it can't write a Todo website. The "agent loop" (Plan → Act →
+Observe with write_file / run_shell tools) is a real architecture, but it
+needs an instruction-tuned, tool-use-capable model — that belongs to a
+separate exercise once you swap GPT-2 for, say, a local Qwen-2.5-Coder.
 
-Emits a stream of dict events so L1 can render progress.
+So in this repo L2 demonstrates one specific thing: how a streaming chat
+client wraps an inference server. That's it. The interesting "from
+scratch" content is in L3/L4/L5.
+
+Emits the same event shape L1 expects:
+    {type: 'token', v: str}
+    {type: 'done'}
+    {type: 'error', message: str}
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Iterator
 
-import anthropic
-
-import tools
-
-MODEL = "claude-sonnet-4-6"
-MAX_ITERATIONS = 20
-
-SYSTEM_PROMPT = """You are a coding agent. The user will ask for a small website or
-script. Use the `write_file` and `run_shell` tools to produce the files in the
-working directory. Keep it small and self-contained: a single index.html plus
-at most one backend file. Do NOT run long-lived servers. When the task is
-complete, respond with a short summary (no more tool_use calls).
-"""
+L3_URL = os.environ.get("L3_URL", "http://localhost:9000/generate")
+MAX_TOKENS = int(os.environ.get("L2_MAX_TOKENS", "64"))
+TEMPERATURE = float(os.environ.get("L2_TEMPERATURE", "0.8"))
 
 
-def run_agent(query: str, work_dir: Path) -> Iterator[dict]:
-    """Yield events: {type: 'token'|'tool'|'tool_result'|'done'|'error', ...}."""
-    work_dir = Path(work_dir)
-    work_dir.mkdir(parents=True, exist_ok=True)
+def build_prompt(query: str) -> str:
+    """Frame the user's query for a base LM (no chat template, no tools).
 
-    client = anthropic.Anthropic()
-    messages: list[dict] = [{"role": "user", "content": query}]
-
-    for _ in range(MAX_ITERATIONS):
-        # === One trip down to L3 ===
-        # Under the hood this is an HTTPS request; the response body is
-        # L3 streaming tokens one by one (L3 runs L4 runs L5).
-        #
-        # We iterate raw events just for text deltas (so L1 can render
-        # tokens live); at the end we ask the SDK for the fully-parsed
-        # message so we don't have to reassemble tool_use JSON ourselves.
-        with client.messages.stream(
-            model=MODEL,
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            tools=tools.TOOL_SCHEMAS,
-            messages=messages,
-        ) as stream:
-            for event in stream:
-                if event.type == "content_block_delta" and event.delta.type == "text_delta":
-                    yield {"type": "token", "v": event.delta.text}
-            final = stream.get_final_message()
-
-        # Convert the SDK's typed blocks into the dict form the API wants
-        # when we send the conversation back next turn.
-        assistant_content: list[dict] = []
-        tool_uses: list[dict] = []
-        for block in final.content:
-            if block.type == "text":
-                assistant_content.append({"type": "text", "text": block.text})
-            elif block.type == "tool_use":
-                assistant_content.append({
-                    "type": "tool_use",
-                    "id": block.id,
-                    "name": block.name,
-                    "input": block.input,
-                })
-                tool_uses.append({"id": block.id, "name": block.name, "input": block.input})
-        messages.append({"role": "assistant", "content": assistant_content})
-
-        if not tool_uses:
-            yield {"type": "done"}
-            return
-
-        # === Execute tools, one per block; build a single user turn back ===
-        tool_results: list[dict] = []
-        for tu in tool_uses:
-            yield {"type": "tool", "name": tu["name"], "summary": _summarize_input(tu["name"], tu["input"])}
-            result = tools.call(tu["name"], tu["input"], work_dir=work_dir)
-            yield {"type": "tool_result", "summary": result.summary}
-            tool_results.append({
-                "type": "tool_result",
-                "tool_use_id": tu["id"],
-                "content": result.output,
-                "is_error": not result.ok,
-            })
-        messages.append({"role": "user", "content": tool_results})
-
-    yield {"type": "error", "message": f"hit MAX_ITERATIONS={MAX_ITERATIONS}"}
+    GPT-2 is a base model — it has no notion of "user" / "assistant", it
+    just continues text. So we frame the query as the start of a written
+    answer and let it continue. This is the same trick OpenAI used in the
+    GPT-2/GPT-3 era before instruction-tuning existed.
+    """
+    return f"Question: {query}\nAnswer:"
 
 
-def _summarize_input(name: str, inp: dict) -> str:
-    if name == "write_file":
-        return f'path="{inp.get("path","")}"'
-    if name == "run_shell":
-        cmd = inp.get("cmd", "")
-        return f'cmd="{cmd[:60]}{"..." if len(cmd) > 60 else ""}"'
-    return ""
+def run_agent(query: str, work_dir: Path | None = None) -> Iterator[dict]:
+    """Stream tokens from L3 back to the caller. `work_dir` is unused
+    (kept for L1 ABI compatibility — once tool use is added back it'll
+    matter again)."""
+    payload = json.dumps({
+        "prompt": build_prompt(query),
+        "max_tokens": MAX_TOKENS,
+        "temperature": TEMPERATURE,
+    }).encode()
+    req = urllib.request.Request(
+        L3_URL,
+        data=payload,
+        headers={"content-type": "application/json"},
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            # L3 streams SSE: "data: {...}\n\n" frames. We parse line by
+            # line — each `token` event is one piece of text emitted by
+            # one decode step in the transformer.
+            for raw in resp:
+                line = raw.decode("utf-8", errors="replace").rstrip()
+                if not line.startswith("data: "):
+                    continue
+                event = json.loads(line[6:])
+                if event.get("done"):
+                    yield {"type": "done"}
+                    return
+                if "token" in event:
+                    yield {"type": "token", "v": event["token"]}
+    except urllib.error.URLError as exc:
+        yield {
+            "type": "error",
+            "message": (
+                f"can't reach L3 at {L3_URL}: {exc.reason}. "
+                f"Start it first: cd 03_model && python server.py"
+            ),
+        }
+    except Exception as exc:  # noqa: BLE001
+        yield {"type": "error", "message": f"{type(exc).__name__}: {exc}"}
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("usage: python agent.py '<your query>'", file=sys.stderr)
         sys.exit(2)
-    work_dir = Path(__file__).resolve().parents[1] / "generated"
-    for ev in run_agent(sys.argv[1], work_dir=work_dir):
-        t = ev["type"]
-        if t == "token":
+    print(f"[L2] prompt: {build_prompt(sys.argv[1])!r}")
+    print(f"[L2] streaming from {L3_URL} ...\n")
+    for ev in run_agent(sys.argv[1]):
+        if ev["type"] == "token":
             sys.stdout.write(ev["v"]); sys.stdout.flush()
-        elif t == "tool":
-            print(f"\n[tool_use] {ev['name']}({ev['summary']})")
-        elif t == "tool_result":
-            print(f"[tool_result] {ev['summary']}")
-        elif t == "done":
-            print("\n[done]")
-        elif t == "error":
+        elif ev["type"] == "done":
+            print("\n\n[done]")
+        elif ev["type"] == "error":
             print(f"\n[error] {ev['message']}", file=sys.stderr)
+            sys.exit(1)

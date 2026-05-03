@@ -82,7 +82,9 @@ async def generate(req: GenRequest) -> StreamingResponse:
             dt = (time.perf_counter() - t0) * 1000
             logits = out.logits[:, -1, :]             # last position only
             past = out.past_key_values                 # <- grown by cur_ids tokens
-            kv_len = past[0][0].shape[-2]              # key cache seq length
+            # transformers 5.x returns a DynamicCache object (no longer a tuple);
+            # keep the legacy tuple path as a fallback for older versions.
+            kv_len = past.get_seq_length() if hasattr(past, "get_seq_length") else past[0][0].shape[-2]
 
             # Temperature sampling. Real servers also support top_p / top_k.
             if req.temperature <= 0:
