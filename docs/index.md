@@ -88,10 +88,7 @@ pip install -r requirements.txt
 ```
 
 !!! tip "网络受限地区"
-    HuggingFace Hub 直连可能失败时，export 一下 mirror：
-    ```bash
-    export HF_ENDPOINT=https://hf-mirror.com
-    ```
+    HF Hub 直连不通时 `GPT.from_pretrained("gpt2")` 会**自动 probe + fallback** 到 `https://hf-mirror.com`。如果想用别的 endpoint，预先 `export HF_ENDPOINT=...` 即可。
 
 ### 完全 from-scratch（推荐先做这一遍）
 

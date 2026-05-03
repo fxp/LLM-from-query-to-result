@@ -107,11 +107,7 @@ pip install -r requirements.txt
 # L5 的 Triton/CUDA 部分需要 NVIDIA GPU；没 GPU 可跳过。
 ```
 
-> **网络受限地区（如中国大陆）**：HuggingFace Hub 直连可能失败（L4 `from_pretrained("gpt2")` 和 transformers 加载 config 时）。在 shell 里 export HF mirror：
-> ```bash
-> export HF_ENDPOINT=https://hf-mirror.com
-> ```
-> BPE 文件 (`encoder.json` + `vocab.bpe`) 来自 `openaipublic.blob.core.windows.net`，那个一般可以直连。Tiny Shakespeare 数据来自 GitHub raw，也一般可以。
+> **网络受限地区（如中国大陆）**：HF Hub 直连不通时 `GPT.from_pretrained("gpt2")` 会**自动 probe + fallback** 到 `https://hf-mirror.com`，控制台会打印 `HF Hub direct unreachable; using mirror: ...`。如果你想用别的 endpoint，预先 `export HF_ENDPOINT=...` 即可（已设的就跳过 probe）。BPE 文件来自 `openaipublic.blob.core.windows.net`，Tiny Shakespeare 来自 GitHub raw——这两个一般可直连。
 
 ### 完全 from-scratch（推荐先做这一遍）
 
