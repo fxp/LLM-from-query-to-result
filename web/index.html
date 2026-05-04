@@ -243,7 +243,25 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 <div class="layers">
 
 <div class="layer">
-  <div class="id">L0</div>
+  <div class="id">L1</div>
+  <div>
+    <div class="title">GPU 基础层 · <code>05_gpu/</code></div>
+    <div class="desc">手写 CUDA naive matmul / tiled matmul（演示分块），Triton fused flash-attention（vs PyTorch unfused 8.4× 加速）</div>
+  </div>
+  <div class="timing">~165 lines</div>
+</div>
+
+<div class="layer">
+  <div class="id">L2</div>
+  <div>
+    <div class="title">Transformer 架构 + BPE · <code>04_transformer/</code></div>
+    <div class="desc">330 行手写 GPT-2（embed/MHA/FFN/LN/KV cache）+ 230 行手写 BPE（与 tiktoken bit-for-bit 等价，7/7 测试集 100% 通过）</div>
+  </div>
+  <div class="timing">~560 lines</div>
+</div>
+
+<div class="layer">
+  <div class="id">L3</div>
   <div>
     <div class="title">预训练 · <code>00_train/</code></div>
     <div class="desc">从随机权重训出 7M GPT。在 1.1MB 莎士比亚语料上 1000 步训练，loss 从 10.815 (= ln(50257)) 降到 4.55</div>
@@ -252,16 +270,16 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 </div>
 
 <div class="layer">
-  <div class="id">L0.5</div>
+  <div class="id">L4</div>
   <div>
-    <div class="title">SFT 微调 · <code>00b_sft/</code></div>
+    <div class="title">指令 SFT · <code>00b_sft/</code></div>
     <div class="desc">242 条手写 Q/A 教 base model 答问。Path A 用我们自训 7M base，Path B 用 OpenAI gpt2-124M（解锁世界知识）</div>
   </div>
   <div class="timing">28 sec</div>
 </div>
 
 <div class="layer">
-  <div class="id">L0.6</div>
+  <div class="id">L5</div>
   <div>
     <div class="title">Agent SFT · <code>00c_agent_sft/</code></div>
     <div class="desc">258 条 ReAct traces 教 model 调用 calc/lookup 工具。Loss masking 让 OBSERVATION prefix 学但内容不学</div>
@@ -270,25 +288,7 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 </div>
 
 <div class="layer">
-  <div class="id">L1</div>
-  <div>
-    <div class="title">Web App · <code>01_app/</code></div>
-    <div class="desc">FastAPI + SSE 流式输出 + ~80 行原生 HTML/JS 前端。浏览器一个 token 一个 token 收到 thought / action / observation</div>
-  </div>
-  <div class="timing">~130 lines</div>
-</div>
-
-<div class="layer">
-  <div class="id">L2</div>
-  <div>
-    <div class="title">Chat 客户端 + Agent Loop · <code>02_agent/</code></div>
-    <div class="desc">默认是 chat completion 客户端。AGENT_MODE=1 启用 ReAct loop：generate-stop-parse-execute-inject 循环</div>
-  </div>
-  <div class="timing">~200 lines</div>
-</div>
-
-<div class="layer">
-  <div class="id">L3</div>
+  <div class="id">L6</div>
   <div>
     <div class="title">推理服务 · <code>03_model/</code></div>
     <div class="desc">FastAPI + 自实现 KV cache。Prefill 1.8 ms / decode 2.6 ms (124M, 5090, batch=1)。零 transformers runtime</div>
@@ -297,21 +297,21 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 </div>
 
 <div class="layer">
-  <div class="id">L4</div>
+  <div class="id">L7</div>
   <div>
-    <div class="title">Transformer + BPE · <code>04_transformer/</code></div>
-    <div class="desc">330 行手写 GPT-2（embed/MHA/FFN/LN/KV cache）+ 230 行手写 BPE（与 tiktoken bit-for-bit 等价，7/7 测试集 100% 通过）</div>
+    <div class="title">App / Web UI · <code>01_app/</code></div>
+    <div class="desc">FastAPI + SSE 流式输出 + ~80 行原生 HTML/JS 前端。浏览器一个 token 一个 token 收到 thought / action / observation</div>
   </div>
-  <div class="timing">~560 lines</div>
+  <div class="timing">~130 lines</div>
 </div>
 
 <div class="layer">
-  <div class="id">L5</div>
+  <div class="id">L8</div>
   <div>
-    <div class="title">GPU Kernels · <code>05_gpu/</code></div>
-    <div class="desc">手写 CUDA naive matmul / tiled matmul（演示分块），Triton fused flash-attention（vs PyTorch unfused 8.4× 加速）</div>
+    <div class="title">Agent 循环 · <code>02_agent/</code></div>
+    <div class="desc">默认是 chat completion 客户端。AGENT_MODE=1 启用 ReAct loop：generate-stop-parse-execute-inject 循环</div>
   </div>
-  <div class="timing">~165 lines</div>
+  <div class="timing">~200 lines</div>
 </div>
 
 </div>
@@ -326,11 +326,11 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 <div class="metrics">
   <div class="metric">
     <div class="num">70 sec</div>
-    <div class="label">L0 + L0.5 + L0.6 训练总耗时（不含 124M 权重下载）</div>
+    <div class="label">L3 + L4 + L5 训练总耗时（不含 124M 权重下载）</div>
   </div>
   <div class="metric">
     <div class="num">10.815</div>
-    <div class="label">L0 step 0 loss = ln(50257) 理论值，验证权重初始化</div>
+    <div class="label">L3 step 0 loss = ln(50257) 理论值，验证权重初始化</div>
   </div>
   <div class="metric">
     <div class="num">7/7 ✓</div>

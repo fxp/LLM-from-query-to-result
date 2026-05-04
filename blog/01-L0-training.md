@@ -1,4 +1,4 @@
-# 01 · L0：从莎士比亚训出一个 GPT
+# 01 · L3：从莎士比亚训出一个 GPT
 
 > [← 序章](00-overview.md) ｜ 代码：[`00_train/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/00_train)
 
@@ -35,7 +35,7 @@ wrote val.bin:     33,803 tokens  (0.07 MB)
 
 ## 模型
 
-不复用别的，**直接拿 L4 那个 330 行手写的 GPT 类**（`04_transformer/model.py`），只是 config 缩小：
+不复用别的，**直接拿 L2 那个 330 行手写的 GPT 类**（`04_transformer/model.py`），只是 config 缩小：
 
 ```python
 CFG = GPTConfig(
@@ -179,4 +179,4 @@ I did not to the day.
 
 `Q: capital of France?` 输入这个 model，它会给你一段莎翁台词。**怎么把它从"接龙莎翁"变成"答 'Paris.'"？** 答案是 SFT，下一篇讲。
 
-[L0.5 — 24 秒把"接龙莎翁"变成"答 Paris" →](02-L0.5-sft.md)
+[L4 — 24 秒把"接龙莎翁"变成"答 Paris" →](02-L0.5-sft.md)

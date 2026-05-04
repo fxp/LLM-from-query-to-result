@@ -1,10 +1,10 @@
-# 03 · L1：浏览器里那一个个蹦出来的字
+# 03 · L7：浏览器里那一个个蹦出来的字
 
-> [← L0.5 SFT](02-L0.5-sft.md) ｜ 代码：[`01_app/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/01_app) ｜ [下一篇 →](04-L2-chat-client.md)
+> [← L4 SFT](02-L0.5-sft.md) ｜ 代码：[`01_app/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/01_app) ｜ [下一篇 →](04-L2-chat-client.md)
 
 ChatGPT 给人"一个字一个字蹦出来"的感觉，**不是**界面动画。是真的——服务端真的一个字一个字地把 token 通过网络送到浏览器，浏览器收到一个就 append 一个。这一篇就讲这件事的实现。
 
-整个 L1 = 一个 ~80 行的 HTML 页面 + 一个 ~50 行的 FastAPI backend。少到我可以把核心代码全贴进来。
+整个 L7 = 一个 ~80 行的 HTML 页面 + 一个 ~50 行的 FastAPI backend。少到我可以把核心代码全贴进来。
 
 ## 真相：SSE (Server-Sent Events)
 
@@ -27,7 +27,7 @@ ChatGPT 给人"一个字一个字蹦出来"的感觉，**不是**界面动画。
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
-from agent import run_agent  # the L2 chat client
+from agent import run_agent  # the L8 chat client
 
 app = FastAPI()
 
@@ -52,7 +52,7 @@ def chat(req: ChatRequest):
 关键三行：
 
 1. `def sse(): ... yield ...` — 一个 Python generator。每 `yield` 一次，FastAPI 给浏览器写一段。
-2. `for event in run_agent(req.query):` — `run_agent` 是 L2 那个 chat 客户端（下一篇讲）。它是另一个 generator，每流式收到一个 token 就 yield 一个 event dict。
+2. `for event in run_agent(req.query):` — `run_agent` 是 L8 那个 chat 客户端（下一篇讲）。它是另一个 generator，每流式收到一个 token 就 yield 一个 event dict。
 3. `StreamingResponse(sse(), media_type="text/event-stream")` — FastAPI 知道这是 SSE，会设对的 HTTP header，并在 generator 每 yield 一次时立刻 flush 到 socket。
 
 **没有特殊的"streaming framework"**。Python generator + FastAPI 内置支持，就够了。
@@ -153,10 +153,10 @@ ChatGPT 的前端肯定不止 80 行。它有：
 跑：
 
 ```bash
-# 终端 1：起 L3 推理服务（下一层讲）
+# 终端 1：起 L6 推理服务（下一层讲）
 cd 03_model && python server.py
 
-# 终端 2：起 L1 web app
+# 终端 2：起 L7 web app
 cd 01_app && uvicorn backend.main:app --reload
 ```
 
@@ -165,15 +165,15 @@ cd 01_app && uvicorn backend.main:app --reload
 ```
 t=0 ms      用户按 Enter
 t=1 ms      fetch('/chat') 发出 POST
-t=5 ms      L1 backend 收到，调 run_agent (L2)
-t=6 ms      L2 build prompt → POST /generate (L3)
-t=10 ms     L3 BPE tokenize prompt
-t=12 ms     L3 prefill GPU forward → 第 1 个 token "Paris" 出来
-t=12.5 ms   L3 yield SSE frame → L2 收到
-t=12.6 ms   L2 yield event → L1 backend
-t=12.7 ms   L1 backend yield SSE frame → 浏览器
+t=5 ms      L7 backend 收到，调 run_agent (L8)
+t=6 ms      L8 build prompt → POST /generate (L6)
+t=10 ms     L6 BPE tokenize prompt
+t=12 ms     L6 prefill GPU forward → 第 1 个 token "Paris" 出来
+t=12.5 ms   L6 yield SSE frame → L8 收到
+t=12.6 ms   L8 yield event → L7 backend
+t=12.7 ms   L7 backend yield SSE frame → 浏览器
 t=13 ms     浏览器 render(' Paris') → 屏幕上看到了 "Paris"
-t=15 ms     L3 decode 第 2 个 token "."
+t=15 ms     L6 decode 第 2 个 token "."
 t=17 ms     ...
 ```
 
@@ -191,24 +191,24 @@ t=17 ms     ...
 
 ## 接口（往下）
 
-L1 跟 L2 通过一个 Python generator 调用：
+L7 跟 L8 通过一个 Python generator 调用：
 
 ```python
 for event in run_agent(query):
     yield f"data: {json.dumps(event)}\n\n"
 ```
 
-`run_agent` 是 L2 实现的接口：
+`run_agent` 是 L8 实现的接口：
 
 ```python
 def run_agent(query: str) -> Iterator[dict]:
     """yields events: {type: 'token', v: str} | {type: 'done'} | {type: 'error', message: str}"""
 ```
 
-L1 不关心 L2 内部怎么工作——它只关心拿到事件流，转成 SSE 推给浏览器。这是一个**进程内函数调用**（不是 HTTP）——L1 + L2 跑在同一个 uvicorn 进程里，因为 L2 也很轻（就是个 HTTP 客户端），没必要拆出来再加一层网络。
+L7 不关心 L8 内部怎么工作——它只关心拿到事件流，转成 SSE 推给浏览器。这是一个**进程内函数调用**（不是 HTTP）——L7 + L8 跑在同一个 uvicorn 进程里，因为 L8 也很轻（就是个 HTTP 客户端），没必要拆出来再加一层网络。
 
-下一篇我们看 L2 内部：它怎么把 query 变成 L3 能理解的 prompt，怎么把 L3 的 SSE 翻译成 L1 要的 event 流。
+下一篇我们看 L8 内部：它怎么把 query 变成 L6 能理解的 prompt，怎么把 L6 的 SSE 翻译成 L7 要的 event 流。
 
 ## 下一篇
 
-[L2 — Chat 客户端的最小本质 →](04-L2-chat-client.md)
+[L8 — Chat 客户端的最小本质 →](04-L2-chat-client.md)

@@ -1,4 +1,4 @@
-# 08 · L5：一次矩阵乘在 GPU 上到底怎么跑
+# 08 · L1：一次矩阵乘在 GPU 上到底怎么跑
 
 > [← L4b BPE](07-L4-bpe.md) ｜ 代码：[`05_gpu/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/05_gpu) ｜ [下一篇 →](09-end-to-end-trace.md)
 
@@ -36,7 +36,7 @@
      └──────────────────┬──────────────────────────┘
                         │ (慢)
      ┌──────────────────▼──────────────────────────┐
-     │  L2 Cache                ~40 MB, ~4 TB/s    │
+     │  L8 Cache                ~40 MB, ~4 TB/s    │
      └──────────────────┬──────────────────────────┘
                         │
      ┌──────────────────▼──────────────────────────┐
@@ -123,7 +123,7 @@ cuBLAS torch : 0.25 ms, 68.94 TFLOPS    9.6×
 
 **Tiled vs naive 在 5090 上只快 1.3×**。这反直觉——A100 上 tile 通常带 5-6× 加速。
 
-为什么？**5090 的 HBM3e 实在太快了**。HBM3e 带宽 ~3 TB/s。Naive 版本理论 256 GFLOP / (256MB × 4 bytes) = 250 GFLOP/s memory limit——但 5090 算到了 7.19 TFLOPS 远超这个。说明实际**没那么 memory-bound**——L2 cache（5090 是 96 MB）已经吃住了大量复读，HBM 没真的被打到。
+为什么？**5090 的 HBM3e 实在太快了**。HBM3e 带宽 ~3 TB/s。Naive 版本理论 256 GFLOP / (256MB × 4 bytes) = 250 GFLOP/s memory limit——但 5090 算到了 7.19 TFLOPS 远超这个。说明实际**没那么 memory-bound**——L8 cache（5090 是 96 MB）已经吃住了大量复读，HBM 没真的被打到。
 
 A100 的 HBM2e 带宽 1.5 TB/s 一半左右，那时候 tile 优势才显著。
 
@@ -193,7 +193,7 @@ Triton fused (1 个 kernel)      : 0.12 ms     8.5× faster
 
 **8.5× 加速**。当 T=8192 时差距更夸张——unfused 占的 attention matrix ~4GB，所有 HBM round-trip 加起来要十几 ms；fused 只要几 ms。
 
-> 💡 **PyTorch 2.0 的 `F.scaled_dot_product_attention`** 在 GPU 上自动调用 flash-attention 内核（[FA2 kernel](https://github.com/Dao-AILab/flash-attention)）。所以 [L4 的 attention 实现](06-L4-transformer.md) 看起来是 3 个 op，但底层只有 1 个 kernel。这就是为什么我们的 transformer 不需要手动 fuse 也能跑得很快——PyTorch 帮我们做了。
+> 💡 **PyTorch 2.0 的 `F.scaled_dot_product_attention`** 在 GPU 上自动调用 flash-attention 内核（[FA2 kernel](https://github.com/Dao-AILab/flash-attention)）。所以 [L2 的 attention 实现](06-L4-transformer.md) 看起来是 3 个 op，但底层只有 1 个 kernel。这就是为什么我们的 transformer 不需要手动 fuse 也能跑得很快——PyTorch 帮我们做了。
 
 ## 实测对比表
 
@@ -224,9 +224,9 @@ Triton fused (1 个 kernel)      : 0.12 ms     8.5× faster
 
 ## 这一层教什么
 
-这个 repo 的 L5 不追 SOTA。手写 tiled 和 cuBLAS 差 7-25×——追这个 gap 需要 Tensor Core、async copy、register tiling、software pipelining——每一项都是一篇论文。这里的目标是：
+这个 repo 的 L1 不追 SOTA。手写 tiled 和 cuBLAS 差 7-25×——追这个 gap 需要 Tensor Core、async copy、register tiling、software pipelining——每一项都是一篇论文。这里的目标是：
 
-1. **看见内存层级**。HBM → L2 → shared mem → registers，每一级带宽和延迟。
+1. **看见内存层级**。HBM → L8 → shared mem → registers，每一级带宽和延迟。
 2. **看见分块复用是为什么 matmul 能快 10×**。
 3. **看见 fused kernel 是为什么 flash-attention 是命**。
 

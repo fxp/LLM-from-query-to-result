@@ -1,6 +1,6 @@
-# L5 · GPU 层
+# L1 · GPU 基础层
 
-**一句话**：L4 里的每一个 `nn.Linear` 和 `attention` 本质都是矩阵乘。这一层告诉你一次矩阵乘在 GPU 上到底怎么跑，以及为什么写对了能快 10×。
+**一句话**：L2 里的每一个 `nn.Linear` 和 `attention` 本质都是矩阵乘。这一层告诉你一次矩阵乘在 GPU 上到底怎么跑，以及为什么写对了能快 10×。
 
 源码：[`05_gpu/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/05_gpu)
 
@@ -24,7 +24,7 @@
      └──────────────────┬──────────────────────────┘
                         │ load / store (慢)
      ┌──────────────────▼──────────────────────────┐
-     │  L2 Cache                ~40 MB, ~4 TB/s    │
+     │  L8 Cache                ~40 MB, ~4 TB/s    │
      └──────────────────┬──────────────────────────┘
                         │
      ┌──────────────────▼──────────────────────────┐
@@ -136,15 +136,15 @@ attention B=4 H=16 T=1024 D=64, fp32:
 
 ## 和其他层的接口
 
-- **往上（L4）**：L4 里的 `x @ w` 最终解析成 `cuBLAS` 或 `cutlass` 的 matmul kernel。换成我们手写的 tiled 版，结果一致，只是慢 20×。换成 Triton flash-attention，结果一致，但 HBM 读写少 10×。
+- **往上（L2）**：L2 里的 `x @ w` 最终解析成 `cuBLAS` 或 `cutlass` 的 matmul kernel。换成我们手写的 tiled 版，结果一致，只是慢 20×。换成 Triton flash-attention，结果一致，但 HBM 读写少 10×。
 - **往下（硬件）**：一个 CUDA kernel 启动后，每个 SM (Streaming Multiprocessor) 拿一组 block，每个 block 有 ~1024 个线程，每 32 个线程是一个 warp，一个周期一条指令喂给整 warp——这是 GPU"算力"的来源。
 
 ## 这一层的"最小"在哪里
 
 - **只覆盖 matmul 和 attention**：softmax / layernorm / gelu 的 kernel 思路类似（都是 "load 一 tile、在 shared 里算、store 回去"），写出来重复。
 - **不追 SOTA**：手写版和 cuBLAS 差 20× 不是我们的失败——想追近 cuBLAS 需要 Tensor Core、async copy、software pipelining，每一项都是一整篇论文。这里的目标是**让你看到为什么分块是最重要的一跳**。
-- **没讲多卡通信**：NCCL、all-reduce、ring topology——那是"很多个 L5 拼起来"的话题，属于下一个 repo。
+- **没讲多卡通信**：NCCL、all-reduce、ring topology——那是"很多个 L1 拼起来"的话题，属于下一个 repo。
 
 ---
 
-[← L4 · Transformer 层](04-transformer.md) | 串起来看 → [端到端 Trace](trace.md)
+[← L2 · Transformer 架构](04-transformer.md) | 串起来看 → [端到端 Trace](trace.md)

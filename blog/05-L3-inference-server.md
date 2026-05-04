@@ -1,8 +1,8 @@
-# 05 · L3：自己写 KV cache 的推理服务
+# 05 · L6：自己写 KV cache 的推理服务
 
-> [← L2 chat client](04-L2-chat-client.md) ｜ 代码：[`03_model/server.py`](https://github.com/fxp/LLM-from-query-to-result/blob/main/03_model/server.py) ｜ [下一篇 →](06-L4-transformer.md)
+> [← L8 chat client](04-L2-chat-client.md) ｜ 代码：[`03_model/server.py`](https://github.com/fxp/LLM-from-query-to-result/blob/main/03_model/server.py) ｜ [下一篇 →](06-L4-transformer.md)
 
-L3 是把 model 变成"服务"的那一层。它接收 HTTP 请求，跑 forward pass，流式返回 token。这听起来简单，但里面藏着 LLM 推理性能的整个故事——**KV cache、prefill vs decode、为什么 batched serving 是工业级 LLM 服务的命**。
+L6 是把 model 变成"服务"的那一层。它接收 HTTP 请求，跑 forward pass，流式返回 token。这听起来简单，但里面藏着 LLM 推理性能的整个故事——**KV cache、prefill vs decode、为什么 batched serving 是工业级 LLM 服务的命**。
 
 这一层 ~140 行 + 0 个 transformers runtime 依赖。换成纯 PyTorch + 我们自己写的 GPT.step()。
 
@@ -18,7 +18,7 @@ API：`POST /generate { prompt, max_tokens, temperature } → SSE token stream`
 
 ## 之前的版本依赖 transformers，删了
 
-最初 L3 直接用 `transformers.GPT2LMHeadModel`：
+最初 L6 直接用 `transformers.GPT2LMHeadModel`：
 
 ```python
 out = model(input_ids=cur_ids, past_key_values=past, use_cache=True)
@@ -26,9 +26,9 @@ out = model(input_ids=cur_ids, past_key_values=past, use_cache=True)
 
 `use_cache=True` 让 transformers 内部管 KV cache。简单、能跑。
 
-但这意味着：本 repo 真正"自己实现的"只到 L4 的架构定义为止，**KV cache 这层重要的推理优化是 transformers 帮我们做的**。
+但这意味着：本 repo 真正"自己实现的"只到 L2 的架构定义为止，**KV cache 这层重要的推理优化是 transformers 帮我们做的**。
 
-后来我把 L4 加了 `step(input_ids, kv_caches)` 方法，自己实现 KV cache 逻辑（详见 [06-L4-transformer](06-L4-transformer.md)）。然后 L3 就可以这么写：
+后来我把 L2 加了 `step(input_ids, kv_caches)` 方法，自己实现 KV cache 逻辑（详见 [06-L4-transformer](06-L4-transformer.md)）。然后 L6 就可以这么写：
 
 ```python
 logits, kv_caches = model.step(input_ids)              # prefill
@@ -37,25 +37,25 @@ for _ in range(max_tokens):
     logits, kv_caches = model.step(next_id, kv_caches)  # decode with cache
 ```
 
-**0 行 transformers runtime**。L3 的 model 就是 L4 的 `GPT` 类。
+**0 行 transformers runtime**。L6 的 model 就是 L2 的 `GPT` 类。
 
 ## 双模式启动
 
-L3 可以加载两种 ckpt：
+L6 可以加载两种 ckpt：
 
 ```python
 MODEL_PATH = os.environ.get("MODEL_PATH")
 
 def load() -> Engine:
     if MODEL_PATH:
-        # Load OUR trained checkpoint (L0 or L0.5 path A)
+        # Load OUR trained checkpoint (L3 or L4 path A)
         blob = torch.load(MODEL_PATH, map_location=DEVICE, weights_only=False)
         cfg = GPTConfig(**blob["config"])
         model = GPT(cfg).to(DEVICE).eval()
         model.load_state_dict(blob["model"])
         return Engine(model=model)
 
-    # Default: load OpenAI's pretrained gpt2-124M via L4 from_pretrained
+    # Default: load OpenAI's pretrained gpt2-124M via L2 from_pretrained
     model = GPT.from_pretrained("gpt2").to(DEVICE).eval()
     return Engine(model=model)
 ```
@@ -169,16 +169,16 @@ GPT-2 small（12 层 × 12 头 × 64 dim × fp16 × 2 for K and V）每 token = 
 
 ## HF mirror 自动 fallback
 
-L4 的 `GPT.from_pretrained("gpt2")` 默认从 huggingface.co 下载权重。在中国大陆这个域名直连不通。
+L2 的 `GPT.from_pretrained("gpt2")` 默认从 huggingface.co 下载权重。在中国大陆这个域名直连不通。
 
-L4 内部加了 probe：开始下载前先 try huggingface.co，3 秒不通就自动 set `HF_ENDPOINT=https://hf-mirror.com`，再额外设 `HF_HUB_DISABLE_XET=1` 绕开慢的 Xet CDN。控制台会打印：
+L2 内部加了 probe：开始下载前先 try huggingface.co，3 秒不通就自动 set `HF_ENDPOINT=https://hf-mirror.com`，再额外设 `HF_HUB_DISABLE_XET=1` 绕开慢的 Xet CDN。控制台会打印：
 
 ```
 HF Hub direct unreachable; using mirror: https://hf-mirror.com
 (set HF_HUB_DISABLE_XET=1, HF_HUB_DOWNLOAD_TIMEOUT=60)
 ```
 
-这是 L3 端到端"完全自动"的关键。用户不用管 env var。详见 [06-L4-transformer](06-L4-transformer.md) 的 `_probe_and_set_hf_endpoint`。
+这是 L6 端到端"完全自动"的关键。用户不用管 env var。详见 [06-L4-transformer](06-L4-transformer.md) 的 `_probe_and_set_hf_endpoint`。
 
 ## 实测端到端时序
 
@@ -186,20 +186,20 @@ HF Hub direct unreachable; using mirror: https://hf-mirror.com
 
 ```
 0.0 ms    浏览器 POST /chat
-3.5 ms    L1 backend 收到，调 run_agent
-4.0 ms    L2 build prompt = "Q: ...\nA:"
-4.5 ms    L2 POST /generate to L3
-5.0 ms    L3 收到
+3.5 ms    L7 backend 收到，调 run_agent
+4.0 ms    L8 build prompt = "Q: ...\nA:"
+4.5 ms    L8 POST /generate to L6
+5.0 ms    L6 收到
 5.2 ms    BPE encode (handwritten, ~250 行 Python) = 12 tokens
 6.0 ms    model.step(input_ids) - prefill
 7.79 ms   prefill done (1.79 ms GPU forward), logits[0,-1] -> argmax = ' Paris'
-7.9 ms    L3 yield SSE "data: {token: ' Paris'}"
-8.0 ms    L2 收到 SSE 帧, yield event
-8.1 ms    L1 收到 event, yield SSE 帧
+7.9 ms    L6 yield SSE "data: {token: ' Paris'}"
+8.0 ms    L8 收到 SSE 帧, yield event
+8.1 ms    L7 收到 event, yield SSE 帧
 8.2 ms    浏览器收到, render(' Paris') -- 屏幕上看到 "Paris"
-10.8 ms   L3 model.step(next_id, kvs) for '.' = 2.63 ms
+10.8 ms   L6 model.step(next_id, kvs) for '.' = 2.63 ms
 11.0 ms   yield '.'
-13.6 ms   L3 model.step(next_id, kvs) for EOT = 2.63 ms
+13.6 ms   L6 model.step(next_id, kvs) for EOT = 2.63 ms
 13.8 ms   yield {done: true}
 14.0 ms   浏览器看到 "✓ done"
 ```
@@ -221,7 +221,7 @@ HF Hub direct unreachable; using mirror: https://hf-mirror.com
 
 ## 接口（往下）
 
-L3 跟 L4 通过两个方法调用：
+L6 跟 L2 通过两个方法调用：
 
 ```python
 # Inference (KV cache 友好)
@@ -233,10 +233,10 @@ logits = model(input_ids)
 logits, loss = model(input_ids, targets=y)             # for training
 ```
 
-`GPT` 类是 L4 实现的，下一篇（其实是两篇——transformer 架构 + BPE）讲它内部到底什么样。
+`GPT` 类是 L2 实现的，下一篇（其实是两篇——transformer 架构 + BPE）讲它内部到底什么样。
 
 ## 下一篇
 
-L3 调 `model.step` —— 这个 model 是个手写 GPT-2，330 行实现 embed / MHA / FFN / LN / KV cache。下一篇拆开看。
+L6 调 `model.step` —— 这个 model 是个手写 GPT-2，330 行实现 embed / MHA / FFN / LN / KV cache。下一篇拆开看。
 
 [L4a — 300 行手写 GPT-2 →](06-L4-transformer.md)

@@ -1,14 +1,14 @@
-# L0.6 · Agent SFT
+# L5 · Agent SFT
 
-**一句话**：在 L0.5 SFT'd 124M 上继续 SFT，教它 ReAct 风格的"Plan → Act → Observe"循环。**33 秒**训完，L2 接 agent loop 后能真的调 `calc` 和 `lookup` 工具答问题。
+**一句话**：在 L4 SFT'd 124M 上继续 SFT，教它 ReAct 风格的"Plan → Act → Observe"循环。**33 秒**训完，L8 接 agent loop 后能真的调 `calc` 和 `lookup` 工具答问题。
 
 ## 这一层为什么存在
 
-[L0.5](../00b_sft) 教的 model 知道"看到 Q: 就 emit A:"，但仅此而已。它不知道：
+[L4](../00b_sft) 教的 model 知道"看到 Q: 就 emit A:"，但仅此而已。它不知道：
 - 该用工具去算 `1234 + 5678`，而不是凭脑补
 - 该用工具去查 `chemical symbol of gold`，而不是依赖 124M 那点 prior
 
-L0.6 教的就是这件事：**model 不再尝试"自己知道"，而是 emit 一个 ACTION 让外部工具来给出 OBSERVATION**。这是从"chat completion"到"agent"的本质区别。
+L5 教的就是这件事：**model 不再尝试"自己知道"，而是 emit 一个 ACTION 让外部工具来给出 OBSERVATION**。这是从"chat completion"到"agent"的本质区别。
 
 ## 格式（ReAct）
 
@@ -68,7 +68,7 @@ python tools.py         # self-test：calc/lookup 10/10 ✓
 
 ## 训练
 
-需要 L0.5 path-B ckpt（`../00b_sft/out/sft_from_gpt2.pt`）作为起点。
+需要 L4 path-B ckpt（`../00b_sft/out/sft_from_gpt2.pt`）作为起点。
 
 ```bash
 cd 00c_agent_sft && python train.py
@@ -88,11 +88,11 @@ epoch 19/20 | avg loss 0.000 | 33.5s
 saved -> out/agent.pt (498 MB)
 ```
 
-为什么收敛快：258 个 traces × avg 48 tokens × 学 ~50% = ~6K target tokens，对 124M 参数来说太小，瞬间记住。这有点像 L0.5 path B：base 已经强，SFT 教格式不教知识。
+为什么收敛快：258 个 traces × avg 48 tokens × 学 ~50% = ~6K target tokens，对 124M 参数来说太小，瞬间记住。这有点像 L4 path B：base 已经强，SFT 教格式不教知识。
 
 ## 跑 agent loop
 
-L3 加载 agent.pt，L2 设 `AGENT_MODE=1` 启用 ReAct loop：
+L6 加载 agent.pt，L8 设 `AGENT_MODE=1` 启用 ReAct loop：
 
 ```bash
 # 终端 1
@@ -106,7 +106,7 @@ AGENT_MODE=1 python agent.py "What is the capital of France?"
 输出：
 
 ```
-[L2] AGENT_MODE — running ReAct loop on http://localhost:9000/generate
+[L8] AGENT_MODE — running ReAct loop on http://localhost:9000/generate
 
 💭 I should look up capital of France.
 🔧 lookup(capital of France)
@@ -151,4 +151,4 @@ Paris.
 
 ---
 
-[← L0.5 · SFT 层](00b-sft.md) ｜ 下一层 → [L1 · App 层](01-app.md)
+[← L4 · 指令 SFT](00b-sft.md) ｜ 下一层 → [L7 · App / Web UI](01-app.md)

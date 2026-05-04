@@ -1,4 +1,4 @@
-# L3 · Model 层（推理服务）
+# L6 · 推理服务
 
 **一句话**：收到一个 HTTP 请求里的 prompt，把它转成 token，喂进 transformer，把输出 token 一个个 stream 回去。
 
@@ -6,7 +6,7 @@
 
 ## 为什么要有这一层
 
-L2 的 Agent 调模型时写的是：
+L8 的 Agent 调模型时写的是：
 ```python
 client.messages.stream(model=..., messages=[...])
 ```
@@ -16,7 +16,7 @@ client.messages.stream(model=..., messages=[...])
 2. **GPU 是共享资源**，多个请求要**排队 + batching**才能喂满 GPU。单请求跑 GPT-2 大概只用 10% 的算力，batch 32 个请求能打满。
 3. **Tokenization + sampling + streaming** 都是服务端做的，客户端只关心文字。
 
-所以 L3 的核心是三件事：
+所以 L6 的核心是三件事：
 ```
   HTTP 请求 ─▶ 排队 ─▶ batch 若干请求 ─▶ forward 一步（用 KV cache）
                                               │
@@ -68,8 +68,8 @@ python client.py "Once upon a time"
 
 ## 和其他层的接口
 
-- **往上（L2）**：HTTP `POST /generate {prompt, max_tokens, temperature}`，返回 SSE token 流。本 demo 的协议比 OpenAI/Anthropic 的简单，但结构相同。
-- **往下（L4）**：每步 forward 都是 `model(input_ids, past_key_values=...)`。`model` 是 HuggingFace 的 `GPT2LMHeadModel`——但**它内部就是 L4 手写版的那种 Transformer**，只是更全。
+- **往上（L8）**：HTTP `POST /generate {prompt, max_tokens, temperature}`，返回 SSE token 流。本 demo 的协议比 OpenAI/Anthropic 的简单，但结构相同。
+- **往下（L2）**：每步 forward 都是 `model(input_ids, past_key_values=...)`。`model` 是 HuggingFace 的 `GPT2LMHeadModel`——但**它内部就是 L2 手写版的那种 Transformer**，只是更全。
 
 ## 看得见的东西
 
@@ -86,4 +86,4 @@ python client.py "Once upon a time"
 
 ---
 
-[← L2 · Agent 层](02-agent.md) | 下一层 → [L4 · Transformer 层](04-transformer.md)
+[← L8 · Agent 循环](02-agent.md) | 下一层 → [L2 · Transformer 架构](04-transformer.md)

@@ -6,32 +6,38 @@
 
 更糟的是：我读过 transformer 论文、用过 OpenAI API、看过 vllm 的 README——这些只是更多名词。**抽象太多，具体太少**。
 
-所以我写了这个 repo：把整条链路切成 7 层，每一层 < 300 行代码、能独立跑、有实测数字，而且——**整条链路不调任何外部 LLM API、不用任何外部 model 权重**。从一个空白随机权重的网络开始，在莎士比亚剧本上训出一个 GPT，然后让它通过自己写的推理服务、自己写的 chat client、自己写的 web app，最终在浏览器里一个字一个字蹦出 "Paris."。
+所以我写了这个 repo：把整条链路切成 8 层，每一层 < 300 行代码、能独立跑、有实测数字，而且——**整条链路不调任何外部 LLM API、不用任何外部 model 权重**。从一个空白随机权重的网络开始，在莎士比亚剧本上训出一个 GPT，然后让它通过自己写的推理服务、自己写的 chat client、自己写的 web app，最终在浏览器里一个字一个字蹦出 "Paris."。
 
-## 七层架构
+## 八层架构（模型结构 → 训练 → 推理 → 应用）
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ L0   训练层       prepare data → train loop → checkpoint      │
-│      00_train/    (PyTorch + AdamW, ~140 行 ≈ 6 min CPU)      │
+│  模型结构                                                     │
+│ L1   GPU 基础层   矩阵乘 / flash-attention 在 GPU 上怎么跑    │
+│      05_gpu/      (CUDA matmul + Triton flash-attention)      │
 ├───────────────────────────────────────────────────────────────┤
-│ L0.5 SFT 层       base ckpt + Q/A → instruction-tuned ckpt    │
-│      00b_sft/     (~140 行 + 60 条手写数据 ≈ 28 sec CPU)      │
-├───────────────────────────────────────────────────────────────┤
-│ L1   App 层       用户看到的聊天界面 + 后端 SSE 流式输出      │
-│      01_app/      (HTML + FastAPI)                            │
-├───────────────────────────────────────────────────────────────┤
-│ L2   Chat 客户端  build prompt → POST /generate → relay 流    │
-│      02_agent/    (HTTP 客户端，纯 urllib)                    │
-├───────────────────────────────────────────────────────────────┤
-│ L3   Model 层     推理服务：tokenize / KV cache / SSE         │
-│      03_model/    (FastAPI + 我们的 GPT.step，零 transformers)│
-├───────────────────────────────────────────────────────────────┤
-│ L4   Transformer  从零实现 GPT-2：embed / MHA / FFN / LN      │
+│ L2   Transformer  从零实现 GPT-2：embed / MHA / FFN / LN      │
 │      04_transformer/  (PyTorch, ~330 行 + 手写 BPE ~230 行)   │
 ├───────────────────────────────────────────────────────────────┤
-│ L5   GPU 层       矩阵乘和 attention 在 GPU 上怎么跑          │
-│      05_gpu/      (CUDA matmul + Triton flash-attention)      │
+│  训练                                                         │
+│ L3   预训练       prepare data → train loop → checkpoint      │
+│      00_train/    (PyTorch + AdamW, ~140 行 ≈ 6 min CPU)      │
+├───────────────────────────────────────────────────────────────┤
+│ L4   指令 SFT     base ckpt + Q/A → instruction-tuned ckpt    │
+│      00b_sft/     (~140 行 + 242 条手写 Q/A ≈ 28 sec)         │
+├───────────────────────────────────────────────────────────────┤
+│ L5   Agent SFT    instr ckpt + ReAct traces → tool-using ckpt │
+│      00c_agent_sft/  (~150 行 + 258 条程序合成 ≈ 33 sec)      │
+├───────────────────────────────────────────────────────────────┤
+│  推理与应用                                                   │
+│ L6   推理服务     tokenize / KV cache / SSE 流式输出          │
+│      03_model/    (FastAPI + 我们的 GPT.step，零 transformers)│
+├───────────────────────────────────────────────────────────────┤
+│ L7   App / Web UI 用户看到的聊天界面 + 后端 SSE 流式输出      │
+│      01_app/      (HTML + FastAPI)                            │
+├───────────────────────────────────────────────────────────────┤
+│ L8   Agent 循环   build prompt → 工具调度 → 注入 OBSERVATION  │
+│      02_agent/    (HTTP 客户端，纯 urllib + ReAct loop)       │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -48,15 +54,15 @@
 
 这两个 token（` Paris` + `.` + EOT，共 3 个）的产生过程，**每一步都在自家代码里**：
 
-1. 浏览器里的字符 → POST `/chat` → L1 FastAPI 收到 (~5 ms)
-2. L1 调 `run_agent(query)` → L2 把 query 包成 `Q: ...\nA:` → POST `/generate` 给 L3 (~1 ms)
-3. L3 用我们手写的 BPE 把 prompt 切成 12 个 token (`[48, 25, 1867, ...]`) (~5 ms)
-4. L3 调 `model.step(input_ids)` 做 prefill：12 层 × 6 个 matmul 算出每个位置的 KV，缓存住 (~2 ms on 5090)
-5. 从最后位置的 logits 采样 → 得到 token `' Paris'` → SSE 推回 L2 → L2 转 L1 → L1 SSE 推到浏览器 (~1 ms)
-6. L3 用上一轮缓存好的 KV，把这个新 token 喂进去做 1 步 decode：又一个 matmul → 得到 `'.'` (~2 ms)
+1. 浏览器里的字符 → POST `/chat` → L7 FastAPI 收到 (~5 ms)
+2. L7 调 `run_agent(query)` → L8 把 query 包成 `Q: ...\nA:` → POST `/generate` 给 L6 (~1 ms)
+3. L6 用我们手写的 BPE 把 prompt 切成 12 个 token (`[48, 25, 1867, ...]`) (~5 ms)
+4. L6 调 `model.step(input_ids)` 做 prefill：12 层 × 6 个 matmul 算出每个位置的 KV，缓存住 (~2 ms on 5090)
+5. 从最后位置的 logits 采样 → 得到 token `' Paris'` → SSE 推回 L8 → L8 转 L7 → L7 SSE 推到浏览器 (~1 ms)
+6. L6 用上一轮缓存好的 KV，把这个新 token 喂进去做 1 步 decode：又一个 matmul → 得到 `'.'` (~2 ms)
 7. 又一步 decode → 得到 `<|endoftext|>` → 流结束
 
-所有 matmul 都跑在 PyTorch + CUDA。如果你嫌不够"自己"，L5 给了手写的 CUDA tiled matmul 和 Triton flash-attention——结果一致，只是慢 8-10× 因为没用 Tensor Core。
+所有 matmul 都跑在 PyTorch + CUDA。如果你嫌不够"自己"，L1 给了手写的 CUDA tiled matmul 和 Triton flash-attention——结果一致，只是慢 8-10× 因为没用 Tensor Core。
 
 ## 这个项目跟外面那些"从零写 GPT"教程的区别
 
@@ -91,24 +97,24 @@
 | 推理服务 (FastAPI + 自家 GPT.step) | ✅ |
 | Tokenizer (BPE) | ✅（230 行手写，验证 bit-for-bit ≡ tiktoken） |
 | Model 架构 (GPT-2) | ✅（330 行手写） |
-| Model 权重 | ✅（L0 训练得到） |
-| Instruct tuning | ✅（L0.5 在我们 base 上 SFT） |
+| Model 权重 | ✅（L3 训练得到） |
+| Instruct tuning | ✅（L4 在我们 base 上 SFT） |
 | 训练数据 | ✅（1.1 MB Tiny Shakespeare 公共领域，bundle 在 repo 里） |
 | 训练循环 | ✅（AdamW + cosine + grad clip） |
 | GPU kernel | ✅（CUDA matmul + Triton flash-attention，可选） |
 
 **借的部分**：
 
-- **PyTorch**（tensor 运算 + autograd）——这是底座，重写它不是这本书的目标。L5 给了一些 CUDA / Triton kernel 让你看到"如果不用 PyTorch，自己怎么写"。
+- **PyTorch**（tensor 运算 + autograd）——这是底座，重写它不是这本书的目标。L1 给了一些 CUDA / Triton kernel 让你看到"如果不用 PyTorch，自己怎么写"。
 - **FastAPI / Starlette**（web server）——同理。
 - **regex** 库（我们的 BPE 用 `\p{L}` `\p{N}` unicode pattern；Python 标准库 `re` 不支持）。
-- **transformers** 库（**仅** L4 `from_pretrained()` 下载 OpenAI gpt2-124M 权重时用，runtime 完全不用）。
+- **transformers** 库（**仅** L2 `from_pretrained()` 下载 OpenAI gpt2-124M 权重时用，runtime 完全不用）。
 
-跳过 OpenAI 权重的话（只跑 L0 训出来的 7M）整栈零 transformers/tiktoken 依赖。
+跳过 OpenAI 权重的话（只跑 L3 训出来的 7M）整栈零 transformers/tiktoken 依赖。
 
 ## 这本书想让你学到什么
 
-1. **抽象塌缩到具体**。读完 L4，你不会再说"transformer 里面有 attention"——你会说"`c_attn` 是个 [D, 3D] 的 Linear，把 x 投影成 q/k/v 三块，然后 reshape 成 `[B, n_head, T, head_dim]`，然后做 `scaled_dot_product_attention`，这个底层在 GPU 上是 cuBLAS 的两个 matmul 加一个 softmax kernel"。
+1. **抽象塌缩到具体**。读完 L2，你不会再说"transformer 里面有 attention"——你会说"`c_attn` 是个 [D, 3D] 的 Linear，把 x 投影成 q/k/v 三块，然后 reshape 成 `[B, n_head, T, head_dim]`，然后做 `scaled_dot_product_attention`，这个底层在 GPU 上是 cuBLAS 的两个 matmul 加一个 softmax kernel"。
 2. **每个数字都看得见**。loss 从 10.815（= ln 50257，理论值）降到 4.5，前向 prefill 多少 ms、decode 多少 ms、`tiled / naive` 1.3×、`Triton fused / unfused` 10×——你不再凭感觉，凭数字。
 3. **完整链路的形态感**。当下次有人说"我们的推理服务慢，要做 KV cache"——你能立刻在脑子里算：12 层 × 8K context × 768 dim × 2 (K and V) × fp16 = ~37.7 MB per sample；1 个用户 batch 1 占 37 MB GPU memory；100 个用户并发要 3.7 GB，48 GB 卡能扛 ~1300 用户。这是**形态感**——抽象坍缩出来的东西。
 
@@ -124,4 +130,4 @@
 
 每篇末尾都有"下一篇"指引和"完整代码在哪"的链接。
 
-下一站：[L0 — 从莎士比亚训出一个 GPT →](01-L0-training.md)
+下一站：[L3 — 从莎士比亚训出一个 GPT →](01-L0-training.md)

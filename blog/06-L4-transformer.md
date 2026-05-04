@@ -1,6 +1,6 @@
 # 06 · L4a：300 行手写 GPT-2
 
-> [← L3 inference server](05-L3-inference-server.md) ｜ 代码：[`04_transformer/model.py`](https://github.com/fxp/LLM-from-query-to-result/blob/main/04_transformer/model.py) ｜ [下一篇 →](07-L4-bpe.md)
+> [← L6 inference server](05-L3-inference-server.md) ｜ 代码：[`04_transformer/model.py`](https://github.com/fxp/LLM-from-query-to-result/blob/main/04_transformer/model.py) ｜ [下一篇 →](07-L4-bpe.md)
 
 GPT-2 的论文 13 页，重点全在前 4 页。模型本身少得令人惊讶：一个 transformer block 就 5 个操作（LayerNorm × 2，Attention，MLP，两个 residual），整个 GPT-2 small 就 12 个相同的 block 串起来。
 
@@ -25,7 +25,7 @@ input_ids [B, T]
 ```
 
 GPT-2 small：N=12 layers, D=768, V=50257. **124 M 参数**。
-我们 L0 用的小版本：N=4, D=128, V=50257. **7 M 参数**（其中 6.4M 是 embedding，所以非 embedding 只有 0.79M）。
+我们 L3 用的小版本：N=4, D=128, V=50257. **7 M 参数**（其中 6.4M 是 embedding，所以非 embedding 只有 0.79M）。
 
 ## Config
 
@@ -115,7 +115,7 @@ y = F.scaled_dot_product_attention(q, k, v, is_causal=is_causal)
 
 这一行 `is_causal = kv_cache is None` 解决两种情况的差异。
 
-> 💡 **`scaled_dot_product_attention` 是 PyTorch 2.0+ 的新 API**。它在 GPU 上自动调用 [Flash Attention 2](https://arxiv.org/abs/2307.08691) 的 fused kernel——把 Q@K.T、softmax、@V 三步融成一个 kernel，省掉中间 [B, h, T, T] attention matrix 的 HBM 读写。当 T=8192 时这个矩阵是 GB 级，省它就是命。详见 [L5 那一篇](08-L5-gpu.md)。
+> 💡 **`scaled_dot_product_attention` 是 PyTorch 2.0+ 的新 API**。它在 GPU 上自动调用 [Flash Attention 2](https://arxiv.org/abs/2307.08691) 的 fused kernel——把 Q@K.T、softmax、@V 三步融成一个 kernel，省掉中间 [B, h, T, T] attention matrix 的 HBM 读写。当 T=8192 时这个矩阵是 GB 级，省它就是命。详见 [L1 那一篇](08-L5-gpu.md)。
 
 ## MLP
 
@@ -233,7 +233,7 @@ def forward(self, input_ids, targets=None, *, verbose=False):
 - `targets=None` → 推理，返回 logits
 - `targets=y` → 训练（next-token prediction），返回 (logits, loss)
 
-L0/L0.5 训练用第二种。L4 inference.py 用第一种。L3 server 用 `step()`（KV cache 版本，下面讲）。
+L3/L4 训练用第二种。L2 inference.py 用第一种。L6 server 用 `step()`（KV cache 版本，下面讲）。
 
 ## step (KV cache inference)
 
@@ -306,11 +306,11 @@ def from_pretrained(cls, name="gpt2"):
 
 关键细节：**HF GPT-2 用 Conv1D，我们用 nn.Linear**。Conv1D 的 weight shape 是 `[in, out]`，Linear 是 `[out, in]`——四个 attn/mlp 矩阵需要 transpose。其他参数（embedding、LayerNorm）的 layout 一致，直接 copy。
 
-`_probe_and_set_hf_endpoint()` 是网络受限地区的自动 mirror fallback——我在 [05-L3](05-L3-inference-server.md) 那篇讲了。
+`_probe_and_set_hf_endpoint()` 是网络受限地区的自动 mirror fallback——我在 [05-L6](05-L3-inference-server.md) 那篇讲了。
 
 ## 模型多大？
 
-L0 训的小 model：
+L3 训的小 model：
 
 ```
 n_layer=4 n_head=4 n_embd=128 block_size=128
@@ -348,6 +348,6 @@ forward FLOP for T=12 prompt:
 
 ## 下一篇
 
-L4 还有一半：**手写 BPE**。tokenizer 比 transformer 容易理解但更难写对——50257 个 vocab、unicode 边界、regex 预切词、merge 优先级。我们的 BPE 跟 tiktoken bit-for-bit 等价。
+L2 还有一半：**手写 BPE**。tokenizer 比 transformer 容易理解但更难写对——50257 个 vocab、unicode 边界、regex 预切词、merge 优先级。我们的 BPE 跟 tiktoken bit-for-bit 等价。
 
 [L4b — 手写 BPE，bit-for-bit 等价 tiktoken →](07-L4-bpe.md)

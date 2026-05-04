@@ -1,13 +1,13 @@
-# L4 · Transformer 层
+# L2 · Transformer 架构
 
-**一句话**：把 L3 送来的一串 token id，经过 embed → N 个 transformer block → 输出每个位置上"下一个 token 是谁"的概率分布。
+**一句话**：把 L6 送来的一串 token id，经过 embed → N 个 transformer block → 输出每个位置上"下一个 token 是谁"的概率分布。
 
 源码：[`04_transformer/`](https://github.com/fxp/LLM-from-query-to-result/tree/main/04_transformer)
 
 ## 为什么是这样
 
-L3 把"prompt 文本"变成了 `[15496, 2267, 287, 257, 640]` 这样的 token id 序列。
-L4 干的事只有一件：**给这串 id，算出下一个 id 的概率**。
+L6 把"prompt 文本"变成了 `[15496, 2267, 287, 257, 640]` 这样的 token id 序列。
+L2 干的事只有一件：**给这串 id，算出下一个 id 的概率**。
 
 这件事靠一个叫 Transformer 的神经网络做。结构是：
 
@@ -89,8 +89,8 @@ predicted next token: " a"
 
 ## 和其他层的接口
 
-- **往上（L3）**：`model(input_ids, past_key_values=...) -> logits, new_kv`。和 HuggingFace 的 API 形状一致，所以这份手写版可以无缝替换掉 L3 里的 `GPT2LMHeadModel`（但会更慢，因为没做任何内核优化——这是 L5 的活）。
-- **往下（L5）**：每个 `LayerNorm` 后面有一个 `nn.Linear`，那**就是一个 matmul**。`attention` 里的 `Q @ K.T`、`attn @ V` 也是 matmul。一次 forward 里 95%+ 的时间花在这些 matmul 上，因此 L5 GPU 优化的目标就是它们。
+- **往上（L6）**：`model(input_ids, past_key_values=...) -> logits, new_kv`。和 HuggingFace 的 API 形状一致，所以这份手写版可以无缝替换掉 L6 里的 `GPT2LMHeadModel`（但会更慢，因为没做任何内核优化——这是 L1 的活）。
+- **往下（L1）**：每个 `LayerNorm` 后面有一个 `nn.Linear`，那**就是一个 matmul**。`attention` 里的 `Q @ K.T`、`attn @ V` 也是 matmul。一次 forward 里 95%+ 的时间花在这些 matmul 上，因此 L1 GPU 优化的目标就是它们。
 
 ## 这一层的"最小"在哪里
 
@@ -106,4 +106,4 @@ predicted next token: " a"
 
 ---
 
-[← L3 · Model 层](03-model.md) | 下一层 → [L5 · GPU 层](05-gpu.md)
+[← L6 · 推理服务](03-model.md) | 下一层 → [L1 · GPU 基础层](05-gpu.md)

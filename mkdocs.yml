@@ -41,14 +41,17 @@ theme:
 
 nav:
   - 首页: index.md
-  - L0 · 训练层: 00-train.md
-  - L0.5 · SFT 层: 00b-sft.md
-  - L0.6 · Agent SFT 层: 00c-agent-sft.md
-  - L1 · App 层: 01-app.md
-  - L2 · Agent 层: 02-agent.md
-  - L3 · Model 层: 03-model.md
-  - L4 · Transformer 层: 04-transformer.md
-  - L5 · GPU 层: 05-gpu.md
+  - 模型结构:
+      - L1 · GPU 基础层: 05-gpu.md
+      - L2 · Transformer 架构: 04-transformer.md
+  - 模型训练:
+      - L3 · 预训练: 00-train.md
+      - L4 · 指令 SFT: 00b-sft.md
+      - L5 · Agent SFT: 00c-agent-sft.md
+  - 推理与应用:
+      - L6 · 推理服务: 03-model.md
+      - L7 · App / Web UI: 01-app.md
+      - L8 · Agent 循环: 02-agent.md
   - 端到端 Trace: trace.md
   - 配套博客:
       - 索引: blog/index.md

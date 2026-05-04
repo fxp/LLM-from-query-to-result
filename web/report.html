@@ -283,8 +283,8 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 <div class="abstract">
 <h2>摘要</h2>
 <p>我们提出并实现了一个 <strong>8 层、~10K 行代码、零外部 LLM API</strong> 的全栈大语言模型系统，从浏览器输入到 GPU 浮点运算的每一行代码都在仓库中。核心论证：现代 LLM 系统的"分层抽象"在工程上可以被压缩到一个人在几个晚上能读完、能改、能跑通的规模——前提是放弃追求生产级性能与规模。</p>
-<p>本项目自带：(1) <strong>L0</strong> 完整的预训练循环（Tiny Shakespeare 上从随机权重训出 7M 参数的 GPT，5090 上 12 秒完成）；(2) <strong>L0.5</strong> 监督微调（SFT），把 base model 转成 instruction-following；(3) <strong>L0.6</strong> Agent SFT，教 124M model 通过 ReAct 格式调用 <code>calc</code> / <code>lookup</code> 工具；(4) <strong>L1-L5</strong> Web UI、HTTP chat 客户端、推理服务（自实现 KV cache）、Transformer 架构、CUDA + Triton GPU kernels。</p>
-<p>关键实测结果：L0+L0.5+L0.6 端到端训练总耗时 <strong>~70 秒</strong>（RTX 5090）；Agent 能正确处理未在 SFT 数据中出现的算术（"1234 + 5678 → 6912"）通过工具扩展能力；手写 BPE tokenizer 与 OpenAI 的 <code>tiktoken</code> bit-for-bit 等价；手写 KV cache 与 PyTorch full-forward 数值严格等价（最大差 &lt; 1e-6）；Triton flash-attention 比 PyTorch 三段式实现快 8.4×。</p>
+<p>本项目自带：(1) <strong>L3</strong> 完整的预训练循环（Tiny Shakespeare 上从随机权重训出 7M 参数的 GPT，5090 上 12 秒完成）；(2) <strong>L4</strong> 监督微调（SFT），把 base model 转成 instruction-following；(3) <strong>L5</strong> Agent SFT，教 124M model 通过 ReAct 格式调用 <code>calc</code> / <code>lookup</code> 工具；(4) <strong>L1-L1</strong> Web UI、HTTP chat 客户端、推理服务（自实现 KV cache）、Transformer 架构、CUDA + Triton GPU kernels。</p>
+<p>关键实测结果：L3+L4+L5 端到端训练总耗时 <strong>~70 秒</strong>（RTX 5090）；Agent 能正确处理未在 SFT 数据中出现的算术（"1234 + 5678 → 6912"）通过工具扩展能力；手写 BPE tokenizer 与 OpenAI 的 <code>tiktoken</code> bit-for-bit 等价；手写 KV cache 与 PyTorch full-forward 数值严格等价（最大差 &lt; 1e-6）；Triton flash-attention 比 PyTorch 三段式实现快 8.4×。</p>
 </div>
 
 <nav class="toc">
@@ -317,7 +317,7 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 <tbody>
 <tr><td>每层代码量</td><td>&lt; 300 行核心代码</td></tr>
 <tr><td>外部 LLM 依赖</td><td>0（不调任何外部 LLM API）</td></tr>
-<tr><td>外部 model 权重</td><td>默认不依赖（L0 自训），可选回退 OpenAI 公开 GPT-2</td></tr>
+<tr><td>外部 model 权重</td><td>默认不依赖（L3 自训），可选回退 OpenAI 公开 GPT-2</td></tr>
 <tr><td>第三方 LLM 库 runtime</td><td>0（不依赖 transformers / tiktoken / vllm 在 inference 路径）</td></tr>
 <tr><td>教学完备性</td><td>覆盖训练 → 推理 → web UI → agent，每段实测可复现</td></tr>
 </tbody>
@@ -330,14 +330,19 @@ footer a:hover { color: var(--accent); border-bottom-color: var(--accent); }
 
 <h3>2.1 整体架构</h3>
 <p>8 个独立但可协作的层：</p>
-<pre><code>L0   00_train/         预训练循环（AdamW + cosine schedule，140 行）
-L0.5 00b_sft/          指令 SFT（loss masking on prompts）
-L0.6 00c_agent_sft/    Agent SFT（ReAct 格式 + 工具）
-L1   01_app/           FastAPI + SSE web app
-L2   02_agent/         HTTP chat 客户端 + ReAct agent loop
-L3   03_model/         推理服务（自实现 KV cache）
-L4   04_transformer/   GPT-2 架构 + 手写 BPE
-L5   05_gpu/           CUDA matmul + Triton flash-attention</code></pre>
+<pre><code>模型结构
+L1   05_gpu/           CUDA matmul + Triton flash-attention
+L2   04_transformer/   GPT-2 架构 + 手写 BPE
+
+模型训练
+L3   00_train/         预训练循环（AdamW + cosine schedule，140 行）
+L4   00b_sft/          指令 SFT（loss masking on prompts）
+L5   00c_agent_sft/    Agent SFT（ReAct 格式 + 工具）
+
+推理与应用
+L6   03_model/         推理服务（自实现 KV cache）
+L7   01_app/           App / Web UI（FastAPI + SSE）
+L8   02_agent/         HTTP chat 客户端 + ReAct agent loop</code></pre>
 <p>每层都有独立的 README（讲为什么 + 怎么做 + 实测数字），可单独启动验证。</p>
 
 <h3>2.2 关键设计决策</h3>
@@ -364,7 +369,7 @@ L5   05_gpu/           CUDA matmul + Triton flash-attention</code></pre>
 
 <h2 id="sec-3">3. 训练方法</h2>
 
-<h3>3.1 L0 预训练</h3>
+<h3>3.1 L3 预训练</h3>
 <div class="table-scroll"><table>
 <thead><tr><th>参数</th><th>值</th></tr></thead>
 <tbody>
@@ -382,16 +387,16 @@ L5   05_gpu/           CUDA matmul + Triton flash-attention</code></pre>
 </table></div>
 <p><strong>初始化</strong>：N(0, 0.02) for all Linear / Embedding；residual c_proj 缩 1/sqrt(2N)（GPT-2 标准做法）。这使 step 0 loss = 10.815，与理论值 ln(50,257) = 10.825 一致。早期版本未做正确初始化时初始 loss = 80（softmax 严重偏向某些 token，cross-entropy 巨大）。</p>
 
-<h3>3.2 L0.5 SFT</h3>
+<h3>3.2 L4 SFT</h3>
 <p>两条独立路径：</p>
 <ul>
-<li><strong>Path A</strong>：在 L0 自训的 7M base 上 SFT。</li>
+<li><strong>Path A</strong>：在 L3 自训的 7M base 上 SFT。</li>
 <li><strong>Path B</strong>：在 OpenAI 公开的 gpt2-124M base 上 SFT（通过 <code>GPT.from_pretrained</code> 加载权重并 reshape 到我们的架构）。</li>
 </ul>
 <div class="table-scroll"><table>
 <thead><tr><th>参数</th><th>Path A</th><th>Path B</th></tr></thead>
 <tbody>
-<tr><td>Base</td><td>7M from L0</td><td>124M OpenAI gpt2</td></tr>
+<tr><td>Base</td><td>7M from L3</td><td>124M OpenAI gpt2</td></tr>
 <tr><td>Data</td><td>242 条手写 Q/A</td><td>同</td></tr>
 <tr><td>Epochs</td><td>100</td><td>30</td></tr>
 <tr><td>Batch</td><td>16</td><td>8</td></tr>
@@ -401,8 +406,8 @@ L5   05_gpu/           CUDA matmul + Triton flash-attention</code></pre>
 </table></div>
 <p><strong>Loss masking</strong>：每条 (Q, A) 样本中，仅 A 的 token 计 loss（prompt token 用 <code>ignore_index=-1</code> mask 掉）。</p>
 
-<h3>3.3 L0.6 Agent SFT</h3>
-<p>在 L0.5 path-B（124M instruction-tuned）基础上继续 SFT，使用 ReAct 格式：</p>
+<h3>3.3 L5 Agent SFT</h3>
+<p>在 L4 path-B（124M instruction-tuned）基础上继续 SFT，使用 ReAct 格式：</p>
 <pre><code>Q: &lt;question&gt;
 THOUGHT: &lt;reasoning&gt;
 ACTION: tool(args)
@@ -426,10 +431,10 @@ parts.append((EOT_ID,                        True))    # 学会停止</code></pr
 <div class="table-scroll"><table>
 <thead><tr><th>阶段</th><th>用时</th><th>初始 Loss</th><th>最终 Loss</th></tr></thead>
 <tbody>
-<tr><td>L0 (1000 steps)</td><td class="num">13.8 s</td><td class="num">10.815</td><td class="num">train 4.555 / val 5.048</td></tr>
-<tr><td>L0.5 path A (100 epochs)</td><td class="num">26.1 s</td><td class="num">9.65</td><td class="num">0.020</td></tr>
-<tr><td>L0.5 path B (30 epochs)</td><td class="num">35.2 s</td><td class="num">1.589</td><td class="num">0.000</td></tr>
-<tr><td>L0.6 Agent (20 epochs)</td><td class="num">26.1 s</td><td class="num">2.094</td><td class="num">0.000</td></tr>
+<tr><td>L3 (1000 steps)</td><td class="num">13.8 s</td><td class="num">10.815</td><td class="num">train 4.555 / val 5.048</td></tr>
+<tr><td>L4 path A (100 epochs)</td><td class="num">26.1 s</td><td class="num">9.65</td><td class="num">0.020</td></tr>
+<tr><td>L4 path B (30 epochs)</td><td class="num">35.2 s</td><td class="num">1.589</td><td class="num">0.000</td></tr>
+<tr><td>L5 Agent (20 epochs)</td><td class="num">26.1 s</td><td class="num">2.094</td><td class="num">0.000</td></tr>
 </tbody>
 </table></div>
 <p>训练总用时（不含一次性的 124M 权重下载）：<strong>~100 秒</strong>。</p>
@@ -437,7 +442,7 @@ parts.append((EOT_ID,                        True))    # 学会停止</code></pr
 <h2 id="sec-4">4. 推理与服务</h2>
 
 <h3>4.1 KV Cache 实现</h3>
-<p>L4 的 GPT 类支持两种 forward：</p>
+<p>L2 的 GPT 类支持两种 forward：</p>
 <pre><code># 训练 / 简单推理：
 logits = model(input_ids)
 logits, loss = model(input_ids, targets=y)
@@ -457,7 +462,7 @@ with torch.no_grad():
 diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
 # Result: 2.4e-7  (浮点累加误差，可接受)</code></pre>
 
-<h3>4.2 推理服务 (L3)</h3>
+<h3>4.2 推理服务 (L6)</h3>
 <p><code>03_model/server.py</code> 是一个 FastAPI 应用，~140 行，提供 <code>POST /generate</code> 流式 SSE。运行时不依赖 transformers 库（<code>from_pretrained</code> 仅在启动时用一次）。</p>
 <p><strong>实测延迟（RTX 5090, fp32, batch=1）</strong>：</p>
 <div class="table-scroll"><table>
@@ -470,7 +475,7 @@ diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
 </table></div>
 <p>注意 prefill &lt; decode 主要是 launch overhead 在小 batch 下占主导——实际 forward 计算 &lt; 1ms。</p>
 
-<h3>4.3 Agent Loop (L2)</h3>
+<h3>4.3 Agent Loop (L8)</h3>
 <p>ReAct 驱动器 <code>02_agent/agent_loop.py</code>，~120 行。核心循环：</p>
 <pre><code>def run_agent(query):
     prompt = f"Q: {query}\n"
@@ -481,7 +486,7 @@ diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
             stop_strings=["OBSERVATION:", "&lt;|endoftext|&gt;"],
             max_tokens=100,
         )
-        # 把 chunk 中的 THOUGHT/ACTION/ANSWER 抛给 L1 渲染
+        # 把 chunk 中的 THOUGHT/ACTION/ANSWER 抛给 L7 渲染
         for event in parse_events(chunk):
             yield event
 
@@ -500,7 +505,7 @@ diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
 <h2 id="sec-5">5. 实验结果</h2>
 
 <h3>5.1 端到端 Agent 测试 (10 query)</h3>
-<p>测试设置：L3 加载 <code>00c_agent_sft/out/agent.pt</code>（124M, agent SFT），L2 启用 <code>AGENT_MODE=1</code>，greedy decoding。</p>
+<p>测试设置：L6 加载 <code>00c_agent_sft/out/agent.pt</code>（124M, agent SFT），L8 启用 <code>AGENT_MODE=1</code>，greedy decoding。</p>
 <div class="table-scroll"><table>
 <thead><tr><th>#</th><th>Query</th><th>类别</th><th>结果</th><th>评</th></tr></thead>
 <tbody>
@@ -559,7 +564,7 @@ diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
 
 <h4>讨论</h4>
 <ul>
-<li><code>tiled / naive = 1.29×</code> 远低于 A100 上典型的 ~6×。原因是 5090 的 HBM 带宽非常高，naive 实现没有真正 memory-bound——L2 cache 已经吃住了大部分复读。这反而让 tile 优化收益降低。</li>
+<li><code>tiled / naive = 1.29×</code> 远低于 A100 上典型的 ~6×。原因是 5090 的 HBM 带宽非常高，naive 实现没有真正 memory-bound——L8 cache 已经吃住了大部分复读。这反而让 tile 优化收益降低。</li>
 <li><code>cuBLAS / tiled = 7.5×</code> 在所有现代 GPU 上稳定。这个 gap 来源于：(a) Tensor Core 用 TF32 而非 fp32，理论峰值高 2-4 倍；(b) cuBLAS 还有 register tiling、async copy、software pipelining 等更深优化。</li>
 <li><strong>flash-attention 8.4× 加速跨硬件代际成立</strong>。这是结构性收益（省去中间 [B, h, T, T] attention matrix 的 HBM round-trip），不依赖具体硬件——T=8192 时差距会更大。</li>
 </ul>
@@ -567,7 +572,7 @@ diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
 <h3>5.4 跨硬件可重复性</h3>
 <p>我们在三台不同硬件、不同 region、不同时间 cold-start 验证了完整 pipeline：</p>
 <div class="table-scroll"><table>
-<thead><tr><th>Server</th><th>GPU</th><th>Region</th><th>运行日期</th><th>L0 用时</th><th>Agent E2E</th></tr></thead>
+<thead><tr><th>Server</th><th>GPU</th><th>Region</th><th>运行日期</th><th>L3 用时</th><th>Agent E2E</th></tr></thead>
 <tbody>
 <tr><td>#1</td><td>RTX 5090</td><td>autodl 西区 D</td><td>2026-05-02</td><td class="num">12.2s</td><td><span class="ok">✓</span></td></tr>
 <tr><td>#2</td><td>RTX 4080 SUPER</td><td>autodl 西区 C</td><td>2026-05-03</td><td class="num">27.6s</td><td><span class="ok">✓</span></td></tr>
@@ -597,7 +602,7 @@ diff = (logits_full[0, -1] - logits_dec[0, -1]).abs().max()
 <p>每个删除都是为了让"这一层在做什么"显式化。教学完备性 vs 性能完备性是对立的——我们选了前者。</p>
 
 <h3>6.2 局限性</h3>
-<p><strong>(a) 模型规模过小</strong>：7M base + 124M SFT'd model 远低于实际可用 LLM 规模。L0.6 agent 在 OOD（非训练分布的对话）上失败（"How are you?"），这是 124M 量级的固有限制。复现 GPT-2 small (124M × 10B WebText token) 需要 1×A100 上 ~4 天，超出本项目教学范围。</p>
+<p><strong>(a) 模型规模过小</strong>：7M base + 124M SFT'd model 远低于实际可用 LLM 规模。L5 agent 在 OOD（非训练分布的对话）上失败（"How are you?"），这是 124M 量级的固有限制。复现 GPT-2 small (124M × 10B WebText token) 需要 1×A100 上 ~4 天，超出本项目教学范围。</p>
 <p><strong>(b) Agent 是单步单工具</strong>：258 条 SFT trace 都是 1 步 ACTION，没有 multi-tool / multi-step 推理样本。</p>
 <p><strong>(c) BPE vocab 是 OpenAI 公开数据</strong>：算法手写但 50,257 个 token 的具体合并规则来自 OpenAI 2019 年公开发布。完全独立的 BPE 训练需要参考 <a href="https://github.com/karpathy/minbpe" target="_blank" rel="noopener">karpathy/minbpe</a>。</p>
 <p><strong>(d) GPU kernel 不追 SOTA</strong>：手写 tiled matmul 比 cuBLAS 慢 7.5×。追近需要 Tensor Core、async copy 等深层优化，超出"分块原理演示"目标。</p>
@@ -624,22 +629,22 @@ mkdir -p ~/.pip
 echo -e "[global]\nindex-url = https://mirrors.aliyun.com/pypi/simple/\ntrusted-host = mirrors.aliyun.com" > ~/.pip/pip.conf
 pip install -r requirements.txt
 
-# 3. L4 验证（首次会下 BPE vocab + 可选 OpenAI gpt2 weights）
+# 3. L2 验证（首次会下 BPE vocab + 可选 OpenAI gpt2 weights）
 cd 04_transformer && python bpe.py && python inference.py "Hello, I am" && cd ..
 
-# 4. L0 训练
+# 4. L3 训练
 cd 00_train && python prepare.py && python train.py && python sample.py "ROMEO:" && cd ..
 
-# 5. L0.5 SFT (path A 自训 base 或 path B OpenAI 124M)
+# 5. L4 SFT (path A 自训 base 或 path B OpenAI 124M)
 cd 00b_sft && python train.py                    # path A, ~28 sec on 5090
 # OR
 cd 00b_sft && python train_from_gpt2.py          # path B, ~35 sec
 cd ..
 
-# 6. L0.6 Agent SFT (依赖 path B 输出)
+# 6. L5 Agent SFT (依赖 path B 输出)
 cd 00c_agent_sft && python build_data.py && python train.py && cd ..
 
-# 7. L5 GPU benchmark
+# 7. L1 GPU benchmark
 cd 05_gpu
 nvcc -O3 -arch=sm_$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | tr -d '.') matmul_naive.cu -o matmul_naive
 ./matmul_naive
@@ -694,7 +699,7 @@ print('max diff:', (full[0, -1] - dec[0, -1]).abs().max().item())
 <tbody>
 <tr><td>代码量（不含数据）</td><td>~3,000 行 Python + ~165 行 CUDA</td></tr>
 <tr><td>训练数据</td><td>1.1 MB Tiny Shakespeare + 242 SFT Q/A + 258 agent traces</td></tr>
-<tr><td>模型权重</td><td>L0 base 7.24M params (29 MB) / L0.5+L0.6 124M (498 MB each)</td></tr>
+<tr><td>模型权重</td><td>L3 base 7.24M params (29 MB) / L4+L5 124M (498 MB each)</td></tr>
 <tr><td>文档</td><td>10 个层级 README + 11 篇 blog + 1 篇 trace + 1 实验报告</td></tr>
 <tr><td>依赖</td><td>torch + fastapi + regex (+ 可选 transformers / triton)</td></tr>
 <tr><td>已验证硬件</td><td>RTX 5090 ×2 / RTX 4080 SUPER ×1</td></tr>

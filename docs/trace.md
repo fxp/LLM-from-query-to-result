@@ -5,7 +5,7 @@
 
 ---
 
-## t=0 ms · L1：一串键盘输入
+## t=0 ms · L7：一串键盘输入
 
 用户在浏览器里敲完回车。`index.html` 里的 JS 把这段字符串 POST 到本地后端：
 
@@ -22,7 +22,7 @@ Content-Type: application/json
 
 ---
 
-## t=1 ms · L2：字符串变成 prompt
+## t=1 ms · L8：字符串变成 prompt
 
 `agent.py` 的 `run_agent` 把 query 包成 base LM 能续写的形式（GPT-2 没有 `user`/`assistant` 概念，只能续写文本）：
 
@@ -31,7 +31,7 @@ prompt = f"Question: {query}\nAnswer:"
 # = "Question: What is the capital of France?\nAnswer:"
 ```
 
-打成一个 HTTP 请求发给本地 L3：
+打成一个 HTTP 请求发给本地 L6：
 
 ```http
 POST http://localhost:9000/generate HTTP/1.1
@@ -45,7 +45,7 @@ Content-Type: application/json
 
 ---
 
-## t=10 ms · L3：字符串变成 token
+## t=10 ms · L6：字符串变成 token
 
 `server.py` 拿到 prompt，先 tokenize（GPT-2 用的是 BPE）：
 
@@ -64,7 +64,7 @@ Content-Type: application/json
   产生 past_key_values：12 层 × 2 × [1, 12 heads, 12, 64]
 ```
 
-接下来 **decode** 循环：每次把上一轮采样出的 1 个新 token 喂进模型，用 KV cache 算下一个。L3 server log 实测：
+接下来 **decode** 循环：每次把上一轮采样出的 1 个新 token 喂进模型，用 KV cache 算下一个。L6 server log 实测：
 
 ```
 [prompt] 'Question: What is the capital of France?\nAnswer:' -> tokens [24361, 25, 1867, 318, 262, 3139, 286, 4881, 30, 198, 33706, 25]
@@ -75,7 +75,7 @@ Content-Type: application/json
 ...
 ```
 
-每个 decode step ~10 ms（Mac M1 CPU，warm）。冷启动第一次 prefill 会慢 50 倍（~1.3 s），是 PyTorch 第一次 dispatch 的开销，往后就稳定下来了。**这些 token 通过 SSE 一个个流回 L2，L2 转发回 L1，L1 转发回浏览器**。
+每个 decode step ~10 ms（Mac M1 CPU，warm）。冷启动第一次 prefill 会慢 50 倍（~1.3 s），是 PyTorch 第一次 dispatch 的开销，往后就稳定下来了。**这些 token 通过 SSE 一个个流回 L8，L8 转发回 L7，L7 转发回浏览器**。
 
 **这一层的关键**：prefill 一次贵（算全部 12 个位置），decode 每次便宜（只算 1 个位置），但要跑几十步。"首 token 延迟" ≈ prefill，"后续 token 速度" ≈ decode。
 
@@ -83,7 +83,7 @@ Content-Type: application/json
 
 ---
 
-## t=11 ms（prefill 中）· L4：token 变成 tensor
+## t=11 ms（prefill 中）· L2：token 变成 tensor
 
 **每一次 forward 内部**发生的事（GPT-2 small：12 层、12 头、d=768）：
 
@@ -100,7 +100,7 @@ Content-Type: application/json
   │  ├── split to q, k, v [1, 12 heads, 12, 64]
   │  ├── scaled_dot_product_attention(q, k, v, is_causal=True)
   │  │     │
-  │  │     ▼  ──── attention 内部，最终交给 L5 ────
+  │  │     ▼  ──── attention 内部，最终交给 L1 ────
   │  │     Q @ K.T  → [1, 12, 12, 12]       ← matmul
   │  │     softmax  → [1, 12, 12, 12]
   │  │     @ V      → [1, 12, 12, 64]       ← matmul
@@ -145,7 +145,7 @@ argmax at last pos -> 257  (' a')
 
 ---
 
-## t=12 到 12.06 ms（一个 matmul 之内）· L5：tensor 变成机器指令
+## t=12 到 12.06 ms（一个 matmul 之内）· L1：tensor 变成机器指令
 
 挑最大的 matmul：lm_head `[12, 768] @ [768, 50257]`。
 
@@ -173,7 +173,7 @@ argmax at last pos -> 257  (' a')
 
 ## t≈3 s · 完成
 
-64 个 decode step 之后（每个 ~30 ms），L3 推一个 `{"done": true}` 帧，L2 转成 `{"type": "done"}` 事件，L1 的 SSE 流结束，浏览器渲染最后的 ✓ done。
+64 个 decode step 之后（每个 ~30 ms），L6 推一个 `{"done": true}` 帧，L8 转成 `{"type": "done"}` 事件，L7 的 SSE 流结束，浏览器渲染最后的 ✓ done。
 
 ---
 
@@ -183,13 +183,13 @@ argmax at last pos -> 257  (' a')
 
 | 层 | 量级 |
 |---|---|
-| L1 字节 | 请求 ~80 B + 64 个 SSE token 帧 ~3 KB |
-| L2 HTTP 调用 | 1 次（往 L3） |
-| L3 token 数 | 12 prompt + 64 generated = 76 |
-| L3 forward 次数 | 1 次 prefill (T=12) + 64 次 decode (T=1) |
-| L4 matmul 次数 | (12 layer × 6 + 1) × 65 ≈ 4700 次 matmul |
-| L5 浮点运算 | ~330 GFLOP（prefill 5 + 64 × decode 5 GFLOP） |
-| L5 HBM 流量（权重 + KV cache） | 单次 forward ~500 MB，总计 ~32 GB |
+| L7 字节 | 请求 ~80 B + 64 个 SSE token 帧 ~3 KB |
+| L8 HTTP 调用 | 1 次（往 L6） |
+| L6 token 数 | 12 prompt + 64 generated = 76 |
+| L6 forward 次数 | 1 次 prefill (T=12) + 64 次 decode (T=1) |
+| L2 matmul 次数 | (12 layer × 6 + 1) × 65 ≈ 4700 次 matmul |
+| L1 浮点运算 | ~330 GFLOP（prefill 5 + 64 × decode 5 GFLOP） |
+| L1 HBM 流量（权重 + KV cache） | 单次 forward ~500 MB，总计 ~32 GB |
 | 实测耗时 | warm: prefill 17 ms + 64 × 10 ms ≈ 0.7 s；cold: 多 ~1.3 s 启动开销 |
 
 GPT-2 124M 是这条链路里的"老式发动机"——慢、答得差，但每一步都看得见、改得动。把它换成 GPT-2 XL (1.5B)、Qwen-2.5-7B，数字会变（更慢、更聪明），但**每个数字背后的 matmul 还是同一个数**。这是这本"教科书"的承诺。
